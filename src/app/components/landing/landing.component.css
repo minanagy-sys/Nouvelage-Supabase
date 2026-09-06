@@ -1,0 +1,286 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:host {
+  --gold:    #C6A26A;
+  --gold-d:  #A37E42;
+  --espresso:#2A211B;
+  --cream:   #F7F3EE;
+  --ink:     #1E1E1E;
+  --e:       cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ── Stage ───────────────────────────── */
+.stage {
+  position: relative;
+  width: 100vw; height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Floating brand header ───────────── */
+.brand-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(1.6rem, 4.5vh, 3rem) 0 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeUp 1.2s var(--e) 0.3s forwards;
+}
+
+.brand-header .logo {
+  width: clamp(180px, 21vw, 280px);
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+
+/* ── Split ───────────────────────────── */
+.split {
+  display: flex;
+  width: 100%; height: 100%;
+}
+
+.panel {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  transition: flex 1s var(--e);
+  outline: none;
+}
+
+/* expand hovered / shrink other */
+.split:has(.panel:hover) .panel        { flex: 0.68; }
+.split:has(.panel:hover) .panel:hover  { flex: 1.32; }
+
+/* ── Background image ────────────────── */
+.panel__bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 1s var(--e);
+}
+.panel:hover .panel__bg { transform: scale(1.04); }
+
+/* ── Overlay ─────────────────────────── */
+.panel__overlay {
+  position: absolute; inset: 0;
+  transition: opacity 0.6s var(--e);
+}
+
+.panel--her .panel__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(20,13,7,.62) 0%,
+    rgba(20,13,7,.18) 38%,
+    rgba(20,13,7,.60) 100%
+  );
+}
+.panel--him .panel__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(8,10,18,.70) 0%,
+    rgba(8,10,18,.22) 38%,
+    rgba(8,10,18,.68) 100%
+  );
+}
+
+.panel:hover .panel__overlay { opacity: 0.78; }
+
+/* ── Content block ───────────────────── */
+.panel__content {
+  position: absolute;
+  bottom: clamp(3rem, 8vh, 6rem);
+  left: 0; right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  padding: 0 1.5rem;
+  opacity: 0;
+  animation: fadeUp 1.2s var(--e) 0.7s forwards;
+}
+
+.panel__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.54rem;
+  font-weight: 500;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+.panel__eyebrow::before,
+.panel__eyebrow::after {
+  content: '';
+  width: 1.6rem; height: 1px;
+  background: var(--gold);
+  opacity: 0.7;
+}
+
+.panel__label {
+  font-family: 'Italiana', serif;
+  font-size: clamp(3.4rem, 6.2vw, 6rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 0.95;
+  letter-spacing: 0.015em;
+  transition: transform 0.6s var(--e), letter-spacing 0.6s var(--e);
+}
+.panel:hover .panel__label {
+  transform: translateY(-5px);
+  letter-spacing: 0.03em;
+}
+
+.panel__welcome {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1rem, 1.3vw, 1.3rem);
+  color: rgba(255,255,255,0.82);
+  letter-spacing: 0.01em;
+  margin-top: 0.45rem;
+  transition: transform 0.6s var(--e);
+}
+.panel:hover .panel__welcome { transform: translateY(-3px); }
+
+.panel__sub {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.88rem, 1.05vw, 1.1rem);
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.02em;
+  margin-top: 0.75rem;
+  transition: transform 0.6s var(--e);
+}
+.panel:hover .panel__sub { transform: translateY(-3px); }
+
+.panel__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.6rem;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: #fff;
+  padding-bottom: 0.28rem;
+  border-bottom: 1px solid rgba(198,162,106,0.5);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s var(--e) 0.05s, transform 0.45s var(--e) 0.05s, border-color 0.3s;
+}
+.panel:hover .panel__cta {
+  opacity: 1;
+  transform: translateY(0);
+}
+.panel__cta:hover { border-color: var(--gold); }
+
+.panel__arrow {
+  display: inline-block;
+  transition: transform 0.3s var(--e);
+}
+.panel:hover .panel__arrow { transform: translateX(4px); }
+
+/* ── Vertical divider ────────────────── */
+.divider {
+  position: absolute;
+  top: 8vh; bottom: 8vh;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(198,162,106,0.4) 20%, rgba(198,162,106,0.4) 80%, transparent);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeIn 1.4s var(--e) 0.6s forwards;
+}
+
+/* ── Corner marks ────────────────────── */
+.corner {
+  position: absolute;
+  width: 28px; height: 28px;
+  z-index: 20;
+  opacity: 0;
+  animation: fadeIn 1.2s var(--e) 0.9s forwards;
+  pointer-events: none;
+}
+.corner--tl { top: clamp(1.2rem,3vh,2rem); left: clamp(1.2rem,3vw,2.2rem); border-top: 1px solid rgba(198,162,106,0.45); border-left: 1px solid rgba(198,162,106,0.45); }
+.corner--tr { top: clamp(1.2rem,3vh,2rem); right: clamp(1.2rem,3vw,2.2rem); border-top: 1px solid rgba(198,162,106,0.45); border-right: 1px solid rgba(198,162,106,0.45); }
+.corner--bl { bottom: clamp(1.2rem,3vh,2rem); left: clamp(1.2rem,3vw,2.2rem); border-bottom: 1px solid rgba(198,162,106,0.45); border-left: 1px solid rgba(198,162,106,0.45); }
+.corner--br { bottom: clamp(1.2rem,3vh,2rem); right: clamp(1.2rem,3vw,2.2rem); border-bottom: 1px solid rgba(198,162,106,0.45); border-right: 1px solid rgba(198,162,106,0.45); }
+
+/* ── Locations footer ────────────────── */
+.locations {
+  position: absolute;
+  bottom: clamp(1.2rem, 2.8vh, 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-size: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0.52em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeIn 1.4s var(--e) 1.1s forwards;
+}
+
+/* ── Animations ──────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Mobile ──────────────────────────── */
+@media (max-width: 680px) {
+  .stage { flex-direction: column; height: auto; min-height: 100dvh; }
+  .split  { flex-direction: column; height: auto; }
+  .panel  { min-height: 52dvh; flex: none !important; }
+  .split:has(.panel:hover) .panel,
+  .split:has(.panel:hover) .panel:hover { flex: none !important; }
+  /* Content always centred vertically on mobile */
+  .panel__content {
+    position: absolute;
+    top: 50%; bottom: auto;
+    transform: translateY(-50%);
+    padding: 0 2rem;
+    animation: fadeUp 1.2s var(--e) 0.7s forwards;
+  }
+  .panel__cta { opacity: 1; transform: none; margin-top: 1.1rem; }
+  .panel__label { font-size: clamp(3rem, 13vw, 4.4rem); }
+  .panel__welcome { font-size: clamp(.95rem, 3.6vw, 1.15rem); margin-top: .4rem; }
+  .panel__sub { font-size: clamp(.82rem, 3.2vw, 1rem); margin-top: .45rem; }
+  .panel__eyebrow { font-size: .52rem; margin-bottom: .6rem; }
+  .divider, .locations, .corner { display: none; }
+  .brand-header { padding-top: clamp(1.2rem, 4vh, 2rem); }
+  .brand-header .logo { width: clamp(150px, 54vw, 210px); }
+  /* Slightly heavier overlay on mobile for text legibility */
+  .panel--her .panel__overlay {
+    background: linear-gradient(180deg, rgba(20,13,7,.68) 0%, rgba(20,13,7,.38) 45%, rgba(20,13,7,.65) 100%);
+  }
+  .panel--him .panel__overlay {
+    background: linear-gradient(180deg, rgba(8,10,18,.72) 0%, rgba(8,10,18,.38) 45%, rgba(8,10,18,.70) 100%);
+  }
+}
+/* Very small phones */
+@media (max-width: 400px) {
+  .panel { min-height: 50dvh; }
+  .panel__label { font-size: clamp(2.6rem, 12vw, 3.4rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel, .panel__bg, .panel__label, .panel__sub, .panel__cta { transition: none; }
+}

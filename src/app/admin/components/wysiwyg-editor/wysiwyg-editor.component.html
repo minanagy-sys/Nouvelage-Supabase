@@ -1,0 +1,231 @@
+<div class="wysiwyg-editor">
+  <!-- Toolbar -->
+  <div class="wysiwyg-toolbar">
+    <!-- Text Formatting -->
+    <div class="toolbar-group">
+      <button type="button" (click)="execCommand('bold')" title="Bold" class="toolbar-btn">
+        <strong>B</strong>
+      </button>
+      <button type="button" (click)="execCommand('italic')" title="Italic" class="toolbar-btn">
+        <em>I</em>
+      </button>
+      <button type="button" (click)="execCommand('underline')" title="Underline" class="toolbar-btn">
+        <u>U</u>
+      </button>
+      <button type="button" (click)="execCommand('strikeThrough')" title="Strikethrough" class="toolbar-btn">
+        <s>S</s>
+      </button>
+    </div>
+
+    <!-- Headings -->
+    <div class="toolbar-group">
+      <button type="button" (click)="formatBlock('h1')" title="Heading 1" class="toolbar-btn">H1</button>
+      <button type="button" (click)="formatBlock('h2')" title="Heading 2" class="toolbar-btn">H2</button>
+      <button type="button" (click)="formatBlock('h3')" title="Heading 3" class="toolbar-btn">H3</button>
+      <button type="button" (click)="formatBlock('p')" title="Paragraph" class="toolbar-btn">P</button>
+    </div>
+
+    <!-- Font Size -->
+    <div class="toolbar-group">
+      <select [(ngModel)]="selectedFontSize" (change)="applyFontSize()" class="toolbar-select" title="Font Size">
+        <option value="12px">12px</option>
+        <option value="14px">14px</option>
+        <option value="16px" selected>16px</option>
+        <option value="18px">18px</option>
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+        <option value="32px">32px</option>
+      </select>
+    </div>
+
+    <!-- Colors -->
+    <div class="toolbar-group">
+      <button type="button" (click)="openColorPicker()" title="Text Color" class="toolbar-btn">
+        🎨
+      </button>
+      <button type="button" (click)="openBgColorPicker()" title="Background Color" class="toolbar-btn">
+        🖌️
+      </button>
+    </div>
+
+    <!-- Lists -->
+    <div class="toolbar-group">
+      <button type="button" (click)="execCommand('insertUnorderedList')" title="Bullet List" class="toolbar-btn">
+        •
+      </button>
+      <button type="button" (click)="execCommand('insertOrderedList')" title="Numbered List" class="toolbar-btn">
+        1.
+      </button>
+      <button type="button" (click)="execCommand('indent')" title="Indent" class="toolbar-btn">
+        ⇥
+      </button>
+      <button type="button" (click)="execCommand('outdent')" title="Outdent" class="toolbar-btn">
+        ⇤
+      </button>
+    </div>
+
+    <!-- Alignment -->
+    <div class="toolbar-group">
+      <button type="button" (click)="execCommand('justifyLeft')" title="Align Left" class="toolbar-btn">
+        ⬅
+      </button>
+      <button type="button" (click)="execCommand('justifyCenter')" title="Align Center" class="toolbar-btn">
+        ↔
+      </button>
+      <button type="button" (click)="execCommand('justifyRight')" title="Align Right" class="toolbar-btn">
+        ➡
+      </button>
+      <button type="button" (click)="execCommand('justifyFull')" title="Justify" class="toolbar-btn">
+        ⬌
+      </button>
+    </div>
+
+    <!-- Insert -->
+    <div class="toolbar-group">
+      <button type="button" (click)="insertLink()" title="Insert Link" class="toolbar-btn">
+        🔗
+      </button>
+      <button type="button" (click)="insertImage()" title="Insert Image URL" class="toolbar-btn">
+        🖼️
+      </button>
+      <label class="toolbar-btn" title="Upload Image">
+        📤
+        <input type="file" accept="image/*" (change)="uploadImage($event)" style="display: none;">
+      </label>
+      <button type="button" (click)="insertTable()" title="Insert Table" class="toolbar-btn">
+        ⊞
+      </button>
+    </div>
+
+    <!-- Blocks -->
+    <div class="toolbar-group">
+      <button type="button" (click)="insertQuote()" title="Insert Quote" class="toolbar-btn">
+        ❝
+      </button>
+      <button type="button" (click)="insertCodeBlock()" title="Insert Code" class="toolbar-btn">
+        &lt;/&gt;
+      </button>
+      <button type="button" (click)="insertHR()" title="Horizontal Line" class="toolbar-btn">
+        ─
+      </button>
+    </div>
+
+    <!-- Other -->
+    <div class="toolbar-group">
+      <button type="button" (click)="execCommand('removeFormat')" title="Clear Formatting" class="toolbar-btn">
+        🧹
+      </button>
+      <button type="button" (click)="execCommand('undo')" title="Undo" class="toolbar-btn">
+        ↶
+      </button>
+      <button type="button" (click)="execCommand('redo')" title="Redo" class="toolbar-btn">
+        ↷
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div
+    class="wysiwyg-content"
+    contenteditable="true"
+    [attr.placeholder]="placeholder"
+    [style.min-height]="minHeight"
+    (input)="onContentChange($event)"
+    (blur)="onTouched()">
+  </div>
+</div>
+
+<!-- Color Picker -->
+<div class="wysiwyg-dialog-overlay" *ngIf="showColorPicker" (click)="showColorPicker = false">
+  <div class="wysiwyg-dialog color-dialog" (click)="$event.stopPropagation()">
+    <h3>Text Color</h3>
+    <input type="color" [(ngModel)]="selectedColor" class="color-input">
+    <div class="color-presets">
+      <button *ngFor="let color of ['#000000', '#333333', '#666666', '#999999', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000', '#000080', '#808080']"
+              [style.background-color]="color"
+              (click)="selectedColor = color; applyTextColor()"
+              class="color-preset">
+      </button>
+    </div>
+    <div class="dialog-buttons">
+      <button type="button" (click)="applyTextColor()" class="btn-primary">Apply</button>
+      <button type="button" (click)="showColorPicker = false" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Background Color Picker -->
+<div class="wysiwyg-dialog-overlay" *ngIf="showBgColorPicker" (click)="showBgColorPicker = false">
+  <div class="wysiwyg-dialog color-dialog" (click)="$event.stopPropagation()">
+    <h3>Background Color</h3>
+    <input type="color" [(ngModel)]="selectedBgColor" class="color-input">
+    <div class="color-presets">
+      <button *ngFor="let color of ['#FFFFFF', '#F0F0F0', '#FFFFE0', '#FFE4E1', '#E6F3FF', '#E8F5E9', '#FFF8DC', '#F5F5DC', '#FAFAFA', '#E0E0E0']"
+              [style.background-color]="color"
+              (click)="selectedBgColor = color; applyBgColor()"
+              class="color-preset">
+      </button>
+    </div>
+    <div class="dialog-buttons">
+      <button type="button" (click)="applyBgColor()" class="btn-primary">Apply</button>
+      <button type="button" (click)="showBgColorPicker = false" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Table Dialog -->
+<div class="wysiwyg-dialog-overlay" *ngIf="showTableDialog" (click)="showTableDialog = false">
+  <div class="wysiwyg-dialog" (click)="$event.stopPropagation()">
+    <h3>Insert Table</h3>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+      <label style="flex: 1;">
+        Rows:
+        <input type="number" [(ngModel)]="tableRows" min="1" max="20" style="width: 100%; margin-top: 0.5rem;">
+      </label>
+      <label style="flex: 1;">
+        Columns:
+        <input type="number" [(ngModel)]="tableCols" min="1" max="10" style="width: 100%; margin-top: 0.5rem;">
+      </label>
+    </div>
+    <div class="dialog-buttons">
+      <button type="button" (click)="confirmInsertTable()" class="btn-primary">Insert</button>
+      <button type="button" (click)="showTableDialog = false" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image URL Dialog -->
+<div class="wysiwyg-dialog-overlay" *ngIf="showImageUrlDialog" (click)="cancelDialog()">
+  <div class="wysiwyg-dialog" (click)="$event.stopPropagation()">
+    <h3>Insert Image URL</h3>
+    <input
+      type="text"
+      [(ngModel)]="imageUrl"
+      placeholder="https://example.com/image.jpg"
+      (keyup.enter)="confirmInsertImage()">
+    <div class="dialog-buttons">
+      <button type="button" (click)="confirmInsertImage()" class="btn-primary">Insert</button>
+      <button type="button" (click)="cancelDialog()" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Dialog -->
+<div class="wysiwyg-dialog-overlay" *ngIf="showLinkDialog" (click)="cancelDialog()">
+  <div class="wysiwyg-dialog" (click)="$event.stopPropagation()">
+    <h3>Insert Link</h3>
+    <input
+      type="text"
+      [(ngModel)]="linkUrl"
+      placeholder="https://example.com"
+      (keyup.enter)="confirmInsertLink()">
+    <input
+      type="text"
+      [(ngModel)]="linkText"
+      placeholder="Link Text">
+    <div class="dialog-buttons">
+      <button type="button" (click)="confirmInsertLink()" class="btn-primary">Insert</button>
+      <button type="button" (click)="cancelDialog()" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>

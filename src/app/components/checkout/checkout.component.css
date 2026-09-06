@@ -1,0 +1,874 @@
+.booking-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--sand) 0%, var(--paper) 100%);
+  padding-top: 80px;
+}
+
+/* Hero Section */
+.booking-hero {
+  position: relative;
+  background: linear-gradient(135deg, #2a211b 0%, var(--espresso) 50%, var(--brown) 100%);
+  padding: 5rem var(--pad);
+  text-align: center;
+  color: var(--paper);
+  overflow: hidden;
+}
+
+.booking-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(201, 169, 97, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(168, 84, 38, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  opacity: 0.5;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  gap: 2rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  opacity: 0.5;
+  transition: all 0.4s var(--e);
+}
+
+.step.active {
+  opacity: 1;
+}
+
+.step.completed {
+  opacity: 0.8;
+}
+
+.step-number {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--paper);
+  transition: all 0.4s var(--e);
+}
+
+.step.active .step-number {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(201, 169, 97, 0.5);
+}
+
+.step.completed .step-number {
+  background: var(--gold-d);
+  border-color: var(--gold-d);
+}
+
+.step-label {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.step-line {
+  width: 100px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.4s var(--e);
+}
+
+.step-line.completed {
+  background: var(--gold);
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--paper);
+  margin-bottom: 1.5rem;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-subtitle {
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 60ch;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Booking Container */
+.booking-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 4rem var(--pad);
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 3rem;
+  align-items: start;
+}
+
+.booking-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Luxury Card */
+.luxury-card {
+  background: var(--paper);
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(42, 33, 27, 0.06),
+    0 0 0 1px rgba(42, 33, 27, 0.04);
+  transition: all 0.4s var(--e);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold-d) 0%, var(--gold) 50%, var(--gold-d) 100%);
+}
+
+.luxury-card:hover {
+  box-shadow:
+    0 8px 32px rgba(42, 33, 27, 0.08),
+    0 0 0 1px rgba(201, 169, 97, 0.2);
+  transform: translateY(-2px);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--sand);
+}
+
+.section-icon {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gold-l) 0%, var(--sand) 100%);
+  border-radius: 12px;
+}
+
+.section-header h2 {
+  font-family: var(--display);
+  font-size: 2rem;
+  color: var(--espresso);
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+/* Selected Services */
+.selected-services {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.luxury-service {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  border: 2px solid var(--sand);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--paper) 0%, var(--sand) 100%);
+  transition: all 0.4s var(--e);
+  position: relative;
+  overflow: hidden;
+}
+
+.remove-item-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(192, 57, 43, 0.1);
+  color: #c0392b;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--e);
+  z-index: 10;
+}
+
+.remove-item-btn:hover {
+  background: #c0392b;
+  color: white;
+  transform: scale(1.1);
+}
+
+.remove-item-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.luxury-service::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--gold-d) 0%, var(--gold) 100%);
+}
+
+.luxury-service:hover {
+  border-color: var(--gold);
+  box-shadow: 0 8px 24px rgba(42, 33, 27, 0.08);
+  transform: translateX(4px);
+}
+
+.service-image-wrapper {
+  position: relative;
+  width: 180px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.service-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.service-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--gold-d);
+  color: var(--paper);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.service-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.service-info h3 {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--espresso);
+  margin-bottom: 0.5rem;
+}
+
+.service-type {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.service-price {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--gold-d);
+}
+
+/* Luxury Form */
+.luxury-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-group label {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--brown);
+  text-transform: uppercase;
+}
+
+.luxury-form input,
+.luxury-form select,
+.luxury-form textarea {
+  padding: 1.1rem 1.5rem;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--paper);
+  transition: all 0.3s var(--e);
+}
+
+.luxury-form input:focus,
+.luxury-form select:focus,
+.luxury-form textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 4px rgba(201, 169, 97, 0.1),
+    0 4px 12px rgba(201, 169, 97, 0.15);
+  transform: translateY(-2px);
+}
+
+.luxury-form textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+/* Payment Methods */
+.payment-methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.payment-card {
+  position: relative;
+  padding: 2.5rem;
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.4s var(--e);
+  background: var(--paper);
+}
+
+.payment-card:hover {
+  border-color: var(--gold-l);
+  box-shadow: 0 8px 24px rgba(42, 33, 27, 0.08);
+  transform: translateY(-4px);
+}
+
+.payment-card.selected {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, var(--paper) 0%, var(--gold-l) 100%);
+  box-shadow:
+    0 8px 32px rgba(201, 169, 97, 0.2),
+    0 0 0 1px var(--gold);
+}
+
+.payment-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sand);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  transition: all 0.4s var(--e);
+}
+
+.payment-card.selected .payment-icon {
+  background: var(--gold);
+}
+
+.payment-icon svg {
+  width: 32px;
+  height: 32px;
+  color: var(--espresso);
+}
+
+.payment-card.selected .payment-icon svg {
+  color: var(--paper);
+}
+
+.payment-details h3 {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--espresso);
+  margin-bottom: 0.5rem;
+}
+
+.payment-details p {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.payment-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.payment-badges span {
+  padding: 0.35rem 0.85rem;
+  background: var(--line-soft);
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--espresso);
+  letter-spacing: 0.05em;
+}
+
+.payment-card.selected .payment-badges span {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.payment-check {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 32px;
+  height: 32px;
+  background: var(--gold);
+  color: var(--paper);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(201, 169, 97, 0.4);
+}
+
+/* Payment Form */
+.payment-form-wrapper {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--sand);
+}
+
+.secure-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, var(--sand) 0%, var(--gold-l) 100%);
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--gold-l);
+}
+
+.secure-badge svg {
+  width: 24px;
+  height: 24px;
+  color: var(--gold-d);
+  flex-shrink: 0;
+}
+
+.secure-badge span {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--espresso);
+  line-height: 1.5;
+}
+
+/* Terms */
+.terms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--sand) 0%, var(--gold-l) 100%);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--gold-l);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s var(--e);
+}
+
+.checkbox-label:hover {
+  opacity: 0.8;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 0.25rem;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--gold-d);
+}
+
+.checkbox-label span {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.checkbox-label a {
+  color: var(--gold-d);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.3s var(--e);
+}
+
+.checkbox-label a:hover {
+  color: var(--espresso);
+}
+
+/* Actions */
+.booking-actions {
+  display: flex;
+  gap: 1.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--sand);
+}
+
+.btn {
+  flex: 1;
+  padding: 1.25rem 2.5rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.4s var(--e);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.btn--outline {
+  background: transparent;
+  border: 3px solid var(--line);
+  color: var(--espresso);
+}
+
+.btn--whatsapp {
+  background: #25D366;
+  border: 3px solid #25D366;
+  color: white;
+}
+
+.btn--whatsapp:hover {
+  background: #128C7E;
+  border-color: #128C7E;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);
+}
+
+.btn--outline:hover {
+  border-color: var(--espresso);
+  background: var(--sand);
+  transform: translateY(-2px);
+}
+
+.btn--solid {
+  background: linear-gradient(135deg, var(--gold-d) 0%, var(--accent) 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(168, 84, 38, 0.3);
+}
+
+.btn--luxury:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 32px rgba(168, 84, 38, 0.4),
+    0 0 0 4px rgba(201, 169, 97, 0.2);
+}
+
+.btn--solid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Processing State */
+.processing {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Booking Summary Sidebar */
+.booking-summary {
+  position: sticky;
+  top: 100px;
+  background: var(--paper);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(42, 33, 27, 0.08),
+    0 0 0 1px rgba(42, 33, 27, 0.04);
+  border-top: 3px solid var(--gold);
+}
+
+.booking-summary h3 {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  color: var(--espresso);
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid var(--sand);
+}
+
+.summary-services {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid var(--sand);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.summary-item span:first-child {
+  color: var(--text);
+  flex: 1;
+  line-height: 1.6;
+}
+
+.summary-item span:last-child {
+  font-weight: 700;
+  color: var(--gold-d);
+  white-space: nowrap;
+  font-family: var(--display);
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid var(--gold-l);
+  background: linear-gradient(135deg, transparent 0%, var(--gold-l) 100%);
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.summary-total span:first-child {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.total-amount {
+  font-family: var(--display);
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--espresso);
+}
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.info-item svg {
+  width: 24px;
+  height: 24px;
+  color: var(--gold-d);
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .booking-container {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-summary {
+    position: static;
+    order: -1;
+  }
+
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-hero {
+    padding: 3rem 1.5rem;
+  }
+
+  .progress-steps {
+    gap: 1rem;
+  }
+
+  .step-line {
+    width: 60px;
+  }
+
+  .step-number {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .booking-container {
+    padding: 2rem 1rem;
+  }
+
+  .luxury-card {
+    padding: 2rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-actions {
+    flex-direction: column;
+  }
+
+  .luxury-service {
+    flex-direction: column;
+  }
+
+  .service-image-wrapper {
+    width: 100%;
+    height: 200px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .luxury-card {
+    padding: 1.5rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+}

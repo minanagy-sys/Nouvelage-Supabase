@@ -1,0 +1,276 @@
+<app-header></app-header>
+
+<div class="dp-wrap" *ngIf="doctor">
+  <!-- Back Link -->
+  <a class="dp-back" (click)="navigateTo('/')">← Back to Home</a>
+
+  <!-- Hero Section -->
+  <div class="dp-hero">
+    <!-- Portrait -->
+    <div class="dp-portrait">
+      <!-- 3. Profile Image from backend -->
+      <img [src]="getImageUrl(doctor.profileImage || doctor.img)" [alt]="doctor.name" style="width:100%;height:100%;object-fit:cover;object-position:center;">
+      <!-- 5. Title/Specialization from backend on photo -->
+      <div class="spec">{{ doctor.specialization || doctor.spec || doctor.role }}</div>
+    </div>
+
+    <!-- Info -->
+    <div class="dp-info">
+      <span class="eyebrow">Nouvel Age · Specialist</span>
+      <!-- 1. Doctor Name from backend -->
+      <h1>{{ doctor.name }}</h1>
+      <!-- 2. Title/Specialization from backend (deg class) -->
+      <p class="deg">{{ doctor.specialization || doctor.deg || doctor.role }}</p>
+      <!-- 4. Short Bio from backend (dp-tagline) -->
+      <p class="dp-tagline">{{ doctor.bio || doctor.about || 'Combines medical precision with aesthetic artistry to deliver natural, confidence-enhancing results.' }}</p>
+
+      <!-- Stats -->
+      <div class="dp-stats">
+        <!-- 5. Years of experience from backend (first dp-stat) -->
+        <div class="dp-stat">
+          <b>{{ doctor.experience || doctor.yrs || yearsExp }}+</b>
+          <span>Years exp</span>
+        </div>
+        <!-- 6. Rating from backend (second dp-stat) -->
+        <div class="dp-stat">
+          <b>{{ doctor.rating ? '★' + doctor.rating : '★4.9' }}</b>
+          <span>Rating</span>
+        </div>
+        <!-- 7. Number of services from backend (third dp-stat) -->
+        <div class="dp-stat">
+          <b>{{ doctor.services?.length || services.length }}</b>
+          <span>Services</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="dp-actions">
+        <a class="btn" (click)="scrollToContact()">
+          Book with {{ firstName }}
+        </a>
+        <a class="btn ghost" (click)="openBeforeAfter()">Before & After</a>
+      </div>
+
+      <!-- 8. Locations from backend (dp-locs) -->
+      <div class="dp-locs" *ngIf="doctor.branches && doctor.branches.length > 0">
+        <span class="dp-locs-lead">Available at</span>
+        <div class="dp-locs-row">
+          <span class="dp-loc" *ngFor="let branch of doctor.branches">{{ branch }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Sections -->
+  <div class="dp-sections">
+    <!-- Main Column -->
+    <div class="dp-main">
+      <!-- About -->
+      <div class="dp-block">
+        <h2>About {{ firstName }}</h2>
+        <ng-container *ngIf="doctor.about">
+          <p>{{ doctor.about }}</p>
+        </ng-container>
+        <ng-container *ngIf="!doctor.about">
+          <p>
+            {{ firstName }} brings years of expertise in aesthetic medicine, focusing on natural-looking results
+            that enhance your inherent beauty. With a deep understanding of facial anatomy and advanced injection
+            techniques, {{ firstName }} creates customized treatment plans tailored to each client's unique goals.
+          </p>
+          <p>
+            Known for a gentle touch and meticulous attention to detail, {{ firstName }} prioritizes client comfort
+            and safety while delivering transformative results. Every treatment is performed with the highest
+            medical standards and premium products.
+          </p>
+        </ng-container>
+      </div>
+
+      <!-- 10. Treatments from backend (dp-treat) - Using real services from ServicesService -->
+      <div class="dp-block" *ngIf="doctorServices && doctorServices.length > 0">
+        <h2>Treatments</h2>
+        <div class="dp-treat">
+          <!-- Show ACTUAL services selected for this doctor from ServicesService -->
+          <div class="t" *ngFor="let service of doctorServices">
+            <h4>{{ service.name }}</h4>
+            <p>{{ service.cardDescription || service.detailSubtitle }}</p>
+          </div>
+        </div>
+      </div>
+      <!-- Fallback to old treatments if no doctorServices -->
+      <div class="dp-block" *ngIf="(!doctorServices || doctorServices.length === 0) && ((doctor.treatments && doctor.treatments.length > 0) || (doctor.services && doctor.services.length > 0))">
+        <h2>Treatments</h2>
+        <div class="dp-treat">
+          <!-- Use treatments field from backend (with name and description) -->
+          <ng-container *ngIf="doctor.treatments && doctor.treatments.length > 0">
+            <div class="t" *ngFor="let treatment of doctor.treatments">
+              <h4>{{ treatment.name }}</h4>
+              <p>{{ treatment.description || getTreatmentDesc(treatment.name) }}</p>
+            </div>
+          </ng-container>
+          <!-- Fallback to services if no treatments -->
+          <ng-container *ngIf="(!doctor.treatments || doctor.treatments.length === 0) && doctor.services && doctor.services.length > 0">
+            <div class="t" *ngFor="let service of doctor.services">
+              <h4>{{ service }}</h4>
+              <p>{{ getTreatmentDesc(service) }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="dp-side">
+      <!-- 11. Certificates from backend (renamed from Credentials) -->
+      <div class="card">
+        <h3>Certificates</h3>
+        <ul class="dp-list">
+          <ng-container *ngIf="doctor.certificates && doctor.certificates.length > 0">
+            <li *ngFor="let cert of doctor.certificates">{{ cert }}</li>
+          </ng-container>
+          <ng-container *ngIf="!doctor.certificates || doctor.certificates.length === 0">
+            <li>Licensed · Egyptian Medical Syndicate</li>
+            <li>International certification in aesthetic medicine</li>
+          </ng-container>
+        </ul>
+      </div>
+
+      <!-- 12. Languages from backend -->
+      <div class="card">
+        <h3>Languages</h3>
+        <div class="dp-langs">
+          <ng-container *ngIf="doctor.languages && doctor.languages.length > 0">
+            <span *ngFor="let lang of doctor.languages">{{ lang }}</span>
+          </ng-container>
+          <ng-container *ngIf="!doctor.languages || doctor.languages.length === 0">
+            <span>Arabic</span>
+            <span>English</span>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Consultations -->
+      <div class="card">
+        <h3>Consultations</h3>
+        <p>Complimentary first consultation. We reply within two hours.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Before & After Section -->
+  <div class="ba-galaxy" *ngIf="beforeAfterCases.length > 0">
+    <div class="ba-head">
+      <div class="ba-head-left">
+        <span class="ba-head-eyebrow">Results Gallery</span>
+        <h3 class="ba-head-title">before &amp; after</h3>
+        <p class="ba-head-sub">Real results from {{ firstName }} &mdash; individual outcomes may vary.</p>
+      </div>
+      <div class="ba-filters" *ngIf="availableCategories.length > 0">
+        <button class="ba-filter-btn" [class.active]="selectedCategory === 'all'" (click)="filterByCategory('all')">All</button>
+        <button class="ba-filter-btn" *ngFor="let cat of availableCategories" [class.active]="selectedCategory === cat" (click)="filterByCategory(cat)">{{ getCategoryLabel(cat) }}</button>
+      </div>
+    </div>
+    <div class="ba-grid">
+      <div class="ba-card"
+           *ngFor="let case of getVisibleCases(); let i = index"
+           [attr.data-cats]="case.category"
+           [class.ba-fold]="i >= 4 && !showAllCases">
+        <div class="ba-before">
+          <img [src]="getImageUrl(case.before)" [alt]="'Before'" loading="lazy">
+          <span class="ba-lbl-b">Before</span>
+        </div>
+        <div class="ba-body">
+          <span class="ba-body-case">Case {{ i + 1 }} &middot; {{ (case.category || 'SKIN').toUpperCase() }}</span>
+          <h4>{{ case.effect || case.bodypart }}</h4>
+          <p *ngIf="case.bodypart">{{ case.bodypart }}</p>
+          <div class="ba-prods" *ngIf="case.material || case.bodypart">
+            <span *ngIf="case.material">{{ case.material }}</span>
+            <span *ngIf="case.bodypart && case.material !== case.bodypart">{{ case.bodypart }}</span>
+          </div>
+        </div>
+        <div class="ba-after">
+          <img [src]="getImageUrl(case.after)" [alt]="'After'" loading="lazy">
+          <span class="ba-lbl-a">After</span>
+        </div>
+      </div>
+    </div>
+    <div class="ba-see-more" *ngIf="getVisibleCases().length > 4 && !showAllCases">
+      <button class="ba-see-btn" type="button" (click)="showAllCases = true">See More Cases</button>
+      <p style="font-family:var(--sans);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(195,164,148,.38);margin-top:.9rem;">Individual outcomes may vary</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTACT ══ -->
+<section class="section contact" id="contact" data-screen-label="Contact">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Reach Out</span>
+      <h2 class="h-l" style="margin-top:1.4rem">Book with <span class="em">{{ doctor?.name || 'Our Doctor' }}</span></h2>
+      <p class="lead" style="margin-top:1.4rem">Schedule your consultation today — we reply within 2 hours.</p>
+    </div>
+
+    <!-- PART 2 · BOOK / ASK -->
+    <div class="ct-part reveal">
+      <div class="ct-part-head"><span class="ct-num">02</span><h3>Book or Ask a Question</h3><span class="ct-note">We reply within 2 hours</span></div>
+      <div class="contact-grid">
+        <div class="ct-direct">
+          <div class="row"><span class="k">Hotline</span><span class="v"><a href="tel:16823">16823</a></span></div>
+          <div class="row"><span class="k">WhatsApp</span><span class="v"><a class="wa-btn" href="https://api.whatsapp.com/send?phone=201000312528" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.02zm-7.01 15.24h-.003a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.25 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/></svg>+20 100 031 2528</a></span></div>
+          <div class="row"><span class="k">Email</span><span class="v"><a href="mailto:info&#64;nouvelageclinic.com">info&#64;nouvelageclinic.com</a></span></div>
+          <div class="row"><span class="k">Instagram</span><span class="v"><a href="https://www.instagram.com/nouvelageclinics" target="_blank" rel="noopener">&#64;nouvelageclinics</a></span></div>
+          <div class="row"><span class="k">Opening Hours</span><span class="v">Sat – Fri · 10am–10pm</span></div>
+        </div>
+        <form class="form reveal" id="ctForm" (submit)="onSubmit($event)" novalidate>
+          <div class="field"><label>Your Name</label><input type="text" id="fName" name="name" placeholder="Full name" required></div>
+          <div class="row2">
+            <div class="field"><label>Phone</label><input type="tel" id="fPhone" name="phone" placeholder="+20 &hellip;" required></div>
+            <div class="field"><label>Email</label><input type="email" id="fEmail" name="email" placeholder="you&#64;email.com" required></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Birthday</label><input type="date" id="fBirthday" name="birthday" required></div>
+            <div class="field"><label>Preferred Branch</label><select id="fBranch" name="branch" required><option value="" disabled selected>Select a branch</option><optgroup label="Cairo"><option>Citystars &mdash; Phase 2</option><option>Cairo Festival City</option><option>Madinaty</option></optgroup><optgroup label="Giza"><option>Mohandessin</option><option>Sheikh Zayed</option><option>Mall of Arabia</option></optgroup><optgroup label="Alexandria"><option>Camp Shizar</option><option>Roushdy</option><option>Loran</option></optgroup></select></div>
+          </div>
+          <div class="field"><label>Topic</label><select id="fTopic" name="topic" required><option value="" disabled selected>Select a topic</option><option>Booking a consultation</option><option>Treatment question</option><option>Pricing inquiry</option><option>Other</option></select></div>
+          <div class="row2">
+            <div class="field"><label>Preferred Doctor</label><input type="text" id="fDoctor" name="doctor" [value]="doctor?.name" readonly style="background-color: #f5f0eb;"></div>
+            <div class="field"><label>Interested Treatment</label><select id="fTreatment" name="treatment" required><option value="" disabled selected>Select a treatment</option><option>Laser Hair Removal</option><option>Botox & Fillers</option><option>Skin Rejuvenation</option><option>Chemical Peels</option><option>Body Contouring</option><option>Hair Restoration</option><option>Acne Treatment</option><option>Pigmentation Treatment</option><option>Anti-Aging</option><option>IV Therapy & Wellness</option><option>Nutrition Consultation</option><option>Other</option></select></div>
+          </div>
+          <div class="field"><label>Message (Optional)</label><textarea id="fMsg" name="message" placeholder="How can we help?"></textarea></div>
+          <button class="btn btn--solid" type="submit">Send Message <span>&rarr;</span></button>
+          <p class="ok" id="ctOk">&#10003; Opening WhatsApp with your message &mdash; we&#39;ll reply within 2 hours.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Loading State -->
+<div class="loading-state" *ngIf="!doctor">
+  <p>Loading doctor information...</p>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer" data-screen-label="Footer">
+  <div class="footer-top">
+    <div>
+      <a class="logo" href="javascript:void(0)" (click)="navigateTo('/')" aria-label="Nouvelage"><img src="/assets/img/LOGO.svg" alt="Nouvelage"></a>
+      <p class="blurb">Nouvel Age Aesthetic Clinic — premium dermatology, laser, injectables, hair &amp; body treatments, delivered with quiet, considered care across Cairo, Giza &amp; Alexandria.</p>
+      <div class="socials"><a href="https://www.instagram.com/nouvelageclinics" target="_blank" rel="noopener" aria-label="Instagram"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiM1ODM4MkMiLz48ZyBmaWxsPSIjRkNGNUYwIiB0cmFuc2Zvcm09InNjYWxlKDAuNjcpIHRyYW5zbGF0ZSg1Ljk3LDUuOTcpIj48cGF0aCBkPSJNMTIgMi4xNjNjMy4yMDQgMCAzLjU4NC4wMTIgNC44NS4wNyAzLjI1Mi4xNDggNC43NzEgMS42OTEgNC45MTkgNC45MTkuMDU4IDEuMjY1LjA2OSAxLjY0NS4wNjkgNC44NDkgMCAzLjIwNS0uMDEyIDMuNTg0LS4wNjkgNC44NDktLjE0OSAzLjIyNS0xLjY2NCA0Ljc3MS00LjkxOSA0LjkxOS0xLjI2Ni4wNTgtMS42NDQuMDctNC44NS4wNy0zLjIwNCAwLTMuNTg0LS4wMTItNC44NDktLjA3LTMuMjYtLjE0OS00Ljc3MS0xLjY5OS00LjkxOS00LjkyLS4wNTgtMS4yNjUtLjA3LTEuNjQ0LS4wNy00Ljg0OSAwLTMuMjA0LjAxMy0zLjU4My4wNy00Ljg0OS4xNDktMy4yMjcgMS42NjQtNC43NzEgNC45MTktNC45MTkgMS4yNjYtLjA1NyAxLjY0NS0uMDY5IDQuODQ5LS4wNjl6TTEyIDBDOC43NDEgMCA4LjMzMy4wMTQgNy4wNTMuMDcyIDIuNjk1LjI3Mi4yNzMgMi42OS4wNzMgNy4wNTIuMDE0IDguMzMzIDAgOC43NDEgMCAxMmMwIDMuMjU5LjAxNCAzLjY2OC4wNzIgNC45NDguMiA0LjM1OCAyLjYxOCA2Ljc4IDYuOTggNi45OEM4LjMzMyAyMy45ODYgOC43NDEgMjQgMTIgMjRjMy4yNTkgMCAzLjY2OC0uMDE0IDQuOTQ4LS4wNzIgNC4zNTQtLjIgNi43ODItMi42MTggNi45NzktNi45OC4wNTktMS4yOC4wNzMtMS42ODkuMDczLTQuOTQ4IDAtMy4yNTktLjAxNC0zLjY2Ny0uMDcyLTQuOTQ3LS4xOTYtNC4zNTQtMi42MTctNi43OC02Ljk3OS02Ljk4QzE1LjY2OC4wMTQgMTUuMjU5IDAgMTIgMHptMCA1LjgzOGE2LjE2MiA2LjE2MiAwIDEgMCAwIDEyLjMyNCA2LjE2MiA2LjE2MiAwIDAgMCAwLTEyLjMyNHpNMTIgMTZhNCA0IDAgMSAxIDAtOCA0IDQgMCAwIDEgMCA4em02LjQwNi0xMS44NDVhMS40NCAxLjQ0IDAgMSAwIDAgMi44ODEgMS40NCAxLjQ0IDAgMCAwIDAtMi44ODF6Ii8+PC9nPjwvc3ZnPg==" alt="Instagram" style="width:24px;height:24px;display:inline-block"></a><a href="https://www.facebook.com/NouvelAgeClinics/" target="_blank" rel="noopener" aria-label="Facebook"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiM1ODM4MkMiLz48ZyBmaWxsPSIjRkNGNUYwIiB0cmFuc2Zvcm09InNjYWxlKDAuNjcpIHRyYW5zbGF0ZSg1Ljk3LDUuOTcpIj48cGF0aCBkPSJNMjQgMTIuMDczYzAtNi42MjctNS4zNzMtMTItMTItMTJzLTEyIDUuMzczLTEyIDEyYzAgNS45OSA0LjM4OCAxMC45NTQgMTAuMTI1IDExLjg1NHYtOC4zODVINy4wNzh2LTMuNDdoMy4wNDdWOS40M2MwLTMuMDA3IDEuNzkyLTQuNjY5IDQuNTMzLTQuNjY5IDEuMzEyIDAgMi42ODYuMjM1IDIuNjg2LjIzNXYyLjk1M0gxNS44M2MtMS40OTEgMC0xLjk1Ni45MjUtMS45NTYgMS44NzR2Mi4yNWgzLjMyOGwtLjUzMiAzLjQ3aC0yLjc5NnY4LjM4NUMxOS42MTIgMjMuMDI3IDI0IDE4LjA2MiAyNCAxMi4wNzN6Ii8+PC9nPjwvc3ZnPg==" alt="Facebook" style="width:24px;height:24px;display:inline-block"></a><a href="https://www.tiktok.com/&#64;nouvelageclinic" target="_blank" rel="noopener" aria-label="TikTok"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiM1ODM4MkMiLz48ZyBmaWxsPSIjRkNGNUYwIiB0cmFuc2Zvcm09InNjYWxlKDAuNjcpIHRyYW5zbGF0ZSg1Ljk3LDUuOTcpIj48cGF0aCBkPSJNMTIuNTI1LjAyYzEuMzEtLjAyIDIuNjEtLjAxIDMuOTEtLjAyLjA4IDEuNTMuNjMgMy4wOSAxLjc1IDQuMTcgMS4xMiAxLjExIDIuNyAxLjYyIDQuMjQgMS43OXY0LjAzYy0xLjQ0LS4wNS0yLjg5LS4zNS00LjItLjk3LS41Ny0uMjYtMS4xLS41OS0xLjYyLS45My0uMDEgMi45Mi4wMSA1Ljg0LS4wMiA4Ljc1LS4wOCAxLjQtLjU0IDIuNzktMS4zNSAzLjk0LTEuMzEgMS45Mi0zLjU4IDMuMTctNS45MSAzLjIxLTEuNDMuMDgtMi44Ni0uMzEtNC4wOC0xLjAzLTIuMDItMS4xOS0zLjQ0LTMuMzctMy42NS01LjcxLS4wMi0uNS0uMDMtMS0uMDEtMS40OS4xOC0xLjkgMS4xMi0zLjcyIDIuNTgtNC45NiAxLjY2LTEuNDQgMy45OC0yLjEzIDYuMTUtMS43Mi4wMiAxLjQ4LS4wNCAyLjk2LS4wNCA0LjQ0LS45OS0uMzItMi4xNS0uMjMtMy4wMi4zNy0uNjMuNDEtMS4xMSAxLjA0LTEuMzYgMS43NS0uMjEuNTEtLjE1IDEuMDctLjE0IDEuNjEuMjQgMS42NCAxLjgyIDMuMDIgMy41IDIuODcgMS4xMi0uMDEgMi4xOS0uNjYgMi43Ny0xLjYxLjE5LS4zMy40LS42Ny40MS0xLjA2LjEtMS43OS4wNi0zLjU3LjA3LTUuMzYuMDEtNC4wMy0uMDEtOC4wNS4wMi0xMi4wN3oiLz48L2c+PC9zdmc+" alt="TikTok" style="width:24px;height:24px;display:inline-block"></a><a href="https://www.youtube.com/&#64;nouvelageclinic" target="_blank" rel="noopener" aria-label="YouTube"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiM1ODM4MkMiLz48ZyBmaWxsPSIjRkNGNUYwIiB0cmFuc2Zvcm09InNjYWxlKDAuNjcpIHRyYW5zbGF0ZSg1Ljk3LDUuOTcpIj48cGF0aCBkPSJNMjMuNDk4IDYuMTg2YTMuMDE2IDMuMDE2IDAgMCAwLTIuMTIyLTIuMTM2QzE5LjUwNSAzLjU0NSAxMiAzLjU0NSAxMiAzLjU0NXMtNy41MDUgMC05LjM3Ny41MDVBMy4wMTcgMy4wMTcgMCAwIDAgLjUwMiA2LjE4NkMwIDguMDcgMCAxMiAwIDEyczAgMy45My41MDIgNS44MTRhMy4wMTYgMy4wMTYgMCAwIDAgMi4xMjIgMi4xMzZjMS44NzEuNTA1IDkuMzc2LjUwNSA5LjM3Ni41MDVzNy41MDUgMCA5LjM3Ny0uNTA1YTMuMDE1IDMuMDE1IDAgMCAwIDIuMTIyLTIuMTM2QzI0IDE1LjkzIDI0IDEyIDI0IDEyczAtMy45My0uNTAyLTUuODE0ek05LjU0NSAxNS41NjhWOC40MzJMMTUuODE4IDEybC02LjI3MyAzLjU2OHoiLz48L2c+PC9zdmc+" alt="YouTube" style="width:24px;height:24px;display:inline-block"></a></div>
+    </div>
+    <div class="col"><h4>Treatments</h4><a href="/services">All Services</a><a href="/services">Laser Hair Removal</a><a href="/services">HydraFacial</a><a href="/services">Botox &amp; Fillers</a><a href="/services">Hair Treatment</a></div>
+    <div class="col"><h4>Company</h4><a href="javascript:void(0)" (click)="navigateTo('/')">Home</a><a href="/team">Our Doctors</a><a href="/company-profile">Company Profile</a><a href="#services">Treatments</a><a href="#contact">Contact</a></div>
+    <div class="col"><h4>Contact</h4><div>📞 16823</div><div>✉ info&#64;nouvelageclinic.com</div><div>📍 Citystars · New Cairo · CFC · Madinaty · Sheikh Zayed · Mall of Arabia · Alexandria</div><div>🕐 Sat–Fri 10am–10pm</div></div>
+  </div>
+  <div class="footer-bot">
+    <span>© <span id="yr">2026</span> Nouvel Age Aesthetic Clinic · Cairo · Giza · Alexandria</span>
+    <span>Privacy · Terms · Accessibility</span>
+  </div>
+</footer>
+
+<!-- floating actions -->
+<div class="float">
+  <a class="wa" href="https://api.whatsapp.com/send?phone=201000312528&text=Hi+Nouvelage+%F0%9F%91%8B+I%27d+like+to+book+my+visit." aria-label="WhatsApp">✆</a>
+  <a class="bk" href="#contact" aria-label="Book">Book</a>
+</div>
+
+<app-cart-flyout></app-cart-flyout>

@@ -1,0 +1,77 @@
+/* Header uses global navigation styles from styles.css */
+/* Component-specific overrides only */
+
+:host {
+  display: block;
+}
+
+/* Ensure SVG logo symbol is available */
+svg[aria-hidden="true"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Fix nav items wrapping */
+::ng-deep .nav-links {
+  flex-wrap: nowrap !important;
+  gap: 1.5rem !important;
+  align-items: center !important;
+}
+
+::ng-deep .nav-links a {
+  white-space: nowrap;
+  font-size: 0.6rem !important;
+}
+
+/* Fix nav dropdown alignment */
+::ng-deep .nav-dropdown {
+  display: flex;
+  align-items: center;
+}
+
+/* Keep header visible at top (not transparent) */
+::ng-deep .nav {
+  background: rgba(247, 243, 238, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 1px 0 rgba(58, 48, 40, 0.08) !important;
+}
+
+::ng-deep .nav .logo {
+  color: var(--espresso) !important;
+}
+
+::ng-deep .nav .nav-links a {
+  color: var(--espresso) !important;
+}
+
+::ng-deep .nav .nav-burger span {
+  background: var(--espresso) !important;
+}
+
+::ng-deep .nav .nav-lang {
+  color: var(--espresso) !important;
+  border-color: rgba(58, 48, 40, 0.2) !important;
+}
+
+/* Ensure proper mobile/desktop nav switching */
+@media (max-width: 768px) {
+  ::ng-deep .nav {
+    display: none !important;
+  }
+
+  ::ng-deep .mobile-nav {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  ::ng-deep .nav {
+    display: flex !important;
+  }
+
+  ::ng-deep .mobile-nav {
+    display: none !important;
+  }
+}

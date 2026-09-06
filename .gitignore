@@ -1,0 +1,77 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Archived dev scripts / one-off tooling (kept locally, out of the repo)
+/_archive/
+/temp/
+/server-data/
+
+# Editor/AI backups
+*.backup
+*.bak
+
+# Local backup bundle
+*.bundle
+
+# Self-hosted Supabase (secrets + data dump)
+/supabase-selfhost/
+
+# ── Uploaded content, not source ─────────────────────────────────────────────
+# 299 MB of the 301 MB in public/assets/img is content uploaded through the CMS.
+# Git keeps every version of every binary forever, which is what took the old
+# repo's .git to 458 MB. These live on the server and in the backups instead.
+/public/assets/img/media-library/
+/public/assets/img/blog/
+/public/assets/img/uploads/
+
+# ── Self-hosted Supabase stack lives outside this repo; belt and braces ──────
+/supabase/
+keys.json
+cluster.sql
+database.sql
+
+# Editor and one-off backups. `*.bak` above misses `.bak2` and `.final`, which
+# are 13 MB of stale copies of services.component.html.
+*.bak*
+*.final
+*.orig

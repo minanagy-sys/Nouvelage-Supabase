@@ -1,0 +1,47 @@
+<div class="stage">
+
+  <!-- Floating brand header -->
+  <header class="brand-header">
+    <img class="logo" [src]="logoUrl" [alt]="logoAlt">
+  </header>
+
+  <!-- Split panels -->
+  <div class="split">
+
+    <!-- For Her -->
+    <a class="panel panel--her" (click)="navigateToHer()" style="cursor:pointer">
+      <div class="panel__bg" [style.background-image]="'url(' + forherBgImage + ')'"></div>
+      <div class="panel__overlay"></div>
+      <div class="panel__content">
+        <span class="panel__eyebrow">{{forherEyebrow}}</span>
+        <span class="panel__label">for Her</span>
+        <span class="panel__welcome">{{forherWelcome}}</span>
+        <span class="panel__sub">{{forherSubtitle}}</span>
+        <span class="panel__cta">{{forherCtaText}} <span class="panel__arrow">→</span></span>
+      </div>
+    </a>
+
+    <!-- For Him -->
+    <a class="panel panel--him" (click)="navigateToHim()" style="cursor:pointer">
+      <div class="panel__bg" [style.background-image]="'url(' + forhimBgImage + ')'"></div>
+      <div class="panel__overlay"></div>
+      <div class="panel__content">
+        <span class="panel__eyebrow">{{forhimEyebrow}}</span>
+        <span class="panel__label">for Him</span>
+        <span class="panel__welcome">{{forhimWelcome}}</span>
+        <span class="panel__sub">{{forhimSubtitle}}</span>
+        <span class="panel__cta">{{forhimCtaText}} <span class="panel__arrow">→</span></span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Vertical divider -->
+  <div class="divider"></div>
+
+  <!-- Location footer -->
+  <footer class="locations">
+    <p>{{locations}}</p>
+  </footer>
+
+</div>

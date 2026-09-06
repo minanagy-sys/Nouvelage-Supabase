@@ -1,0 +1,404 @@
+<app-header></app-header>
+
+<main class="booking-page">
+  <div class="booking-hero">
+    <div class="hero-overlay"></div>
+    <div class="container">
+      <div class="progress-steps">
+        <div class="step active completed">
+          <div class="step-number">1</div>
+          <span class="step-label">Your Details</span>
+        </div>
+        <!-- Payment step hidden until integration -->
+      </div>
+      <h1 class="hero-title">Reserve Your <em>Transformation</em></h1>
+      <p class="hero-subtitle">Experience luxury aesthetic treatments with Egypt's finest specialists</p>
+    </div>
+  </div>
+
+  <div class="booking-container">
+    <div class="booking-content">
+
+      <!-- STEP 1: BOOKING INFO -->
+      <div *ngIf="currentStep === 'info'">
+        <!-- Your Selection -->
+        <section class="booking-section luxury-card">
+          <div class="section-header">
+            <div class="section-icon">✨</div>
+            <h2>Your Selection</h2>
+          </div>
+          <div class="selected-services">
+            <div *ngFor="let item of cartItems$ | async" class="service-card luxury-service">
+              <button type="button" class="remove-item-btn" (click)="removeItemFromCart(item)" title="Remove item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <div class="service-image-wrapper">
+                <img [src]="item.image || 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=300&h=200&fit=crop&q=80'" [alt]="item.name">
+                <div class="service-badge">Premium</div>
+              </div>
+              <div class="service-info">
+                <h3>{{ item.name }} <span *ngIf="item.quantity > 1" class="item-qty">×{{ item.quantity }}</span></h3>
+                <p class="service-type">{{ item.type === 'bundle' ? 'Bundle Treatment' : 'Individual Service' }}</p>
+                <p class="service-price">{{ item.price | number:'1.0-0' }} EGP <span *ngIf="item.quantity > 1" class="qty-note">({{ item.price * item.quantity | number:'1.0-0' }} EGP total)</span></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Personal Information -->
+        <section class="booking-section luxury-card">
+          <div class="section-header">
+            <div class="section-icon">👤</div>
+            <h2>Personal Information</h2>
+          </div>
+          <form class="booking-form luxury-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input
+                type="text"
+                id="firstName"
+                [(ngModel)]="bookingInfo.firstName"
+                name="firstName"
+                required
+                placeholder="Enter your first name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input
+                type="text"
+                id="lastName"
+                [(ngModel)]="bookingInfo.lastName"
+                name="lastName"
+                required
+                placeholder="Enter your last name"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="bookingInfo.email"
+                name="email"
+                required
+                placeholder="your.email@example.com"
+              />
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input
+                type="tel"
+                id="phone"
+                [(ngModel)]="bookingInfo.phone"
+                name="phone"
+                required
+                placeholder="01XXXXXXXXX"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="birthday">Date of Birth (Optional)</label>
+            <input
+              type="date"
+              id="birthday"
+              [(ngModel)]="bookingInfo.birthday"
+              name="birthday"
+            />
+          </div>
+          </form>
+        </section>
+
+        <!-- Appointment Details -->
+        <section class="booking-section luxury-card">
+          <div class="section-header">
+            <div class="section-icon">📅</div>
+            <h2>Appointment Details</h2>
+          </div>
+          <form class="booking-form luxury-form">
+          <div class="form-group">
+            <label for="branch">Preferred Branch *</label>
+            <select
+              id="branch"
+              [(ngModel)]="bookingInfo.preferredBranch"
+              name="branch"
+              required
+            >
+              <option value="">Select a branch</option>
+              <option *ngFor="let branch of branches" [value]="branch">{{ branch }}</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="date">Preferred Date *</label>
+              <input
+                type="date"
+                id="date"
+                [(ngModel)]="bookingInfo.preferredDate"
+                name="date"
+                [min]="getMinDate()"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="time">Preferred Time *</label>
+              <select
+                id="time"
+                [(ngModel)]="bookingInfo.preferredTime"
+                name="time"
+                required
+              >
+                <option value="">Select a time</option>
+                <option *ngFor="let slot of timeSlots" [value]="slot">{{ slot }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Special Requests or Notes (Optional)</label>
+            <textarea
+              id="notes"
+              [(ngModel)]="bookingInfo.notes"
+              name="notes"
+              rows="4"
+              placeholder="Any specific concerns, allergies, or preferences we should know about?"
+            ></textarea>
+          </div>
+          </form>
+        </section>
+
+        <!-- Terms and Confirmation -->
+        <section class="booking-section luxury-card">
+          <div class="terms-section">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="agreedToTerms" />
+            <span>I agree to the <a href="/terms" target="_blank">Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a> *</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="newsletterSignup" />
+            <span>Send me exclusive offers, beauty tips, and updates</span>
+          </label>
+        </div>
+
+          <div class="booking-actions">
+            <button type="button" class="btn btn--whatsapp" (click)="cancelBooking()">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M17.498 14.382c-.301-.15-1.767-.867-2.04-.966-.273-.101-.473-.15-.673.15-.197.295-.771.964-.944 1.162-.175.195-.349.21-.646.075-.3-.15-1.263-.465-2.403-1.485-.888-.795-1.484-1.77-1.66-2.07-.174-.3-.019-.465.13-.615.136-.135.301-.345.451-.523.146-.181.194-.301.297-.496.1-.21.049-.375-.025-.524-.075-.15-.672-1.62-.922-2.206-.24-.584-.487-.51-.672-.51-.172-.015-.371-.015-.571-.015-.2 0-.523.074-.797.359-.273.3-1.045 1.02-1.045 2.475s1.07 2.865 1.219 3.075c.149.195 2.105 3.195 5.1 4.485.714.3 1.27.48 1.704.629.714.227 1.365.195 1.88.121.574-.091 1.767-.721 2.016-1.426.255-.705.255-1.29.18-1.425-.074-.135-.27-.21-.57-.345m-5.446 7.443h-.016c-1.77 0-3.524-.48-5.055-1.38l-.36-.214-3.75.975 1.005-3.645-.239-.375a9.869 9.869 0 01-1.516-5.26c0-5.445 4.455-9.885 9.942-9.885 2.654 0 5.145 1.035 7.021 2.91 1.875 1.886 2.909 4.371 2.909 7.026-.004 5.444-4.46 9.879-9.935 9.879M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.334.101 11.893c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a12.062 12.062 0 005.71 1.447h.006c6.585 0 11.946-5.336 11.949-11.896 0-3.176-1.24-6.165-3.495-8.411"></path>
+              </svg>
+              <span>Book via WhatsApp</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn--solid btn--luxury"
+              (click)="proceedToPayment()"
+              [disabled]="!canProceedToPayment()"
+            >
+              <span>Book Now</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- STEP 2: PAYMENT -->
+      <div *ngIf="currentStep === 'payment'">
+        <section class="booking-section luxury-card">
+          <div class="section-header">
+            <div class="section-icon">💳</div>
+            <h2>Choose Payment Method</h2>
+          </div>
+
+          <div class="payment-methods">
+            <div
+              class="payment-card"
+              [class.selected]="paymentInfo.method === 'online'"
+              (click)="selectPaymentMethod('online')"
+            >
+              <div class="payment-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+              </div>
+              <div class="payment-details">
+                <h3>Pay Online</h3>
+                <p>Secure payment with credit/debit card</p>
+                <div class="payment-badges">
+                  <span>Visa</span>
+                  <span>Mastercard</span>
+                  <span>Meeza</span>
+                </div>
+              </div>
+              <div class="payment-check" *ngIf="paymentInfo.method === 'online'">✓</div>
+            </div>
+
+            <div
+              class="payment-card"
+              [class.selected]="paymentInfo.method === 'in-person'"
+              (click)="selectPaymentMethod('in-person')"
+            >
+              <div class="payment-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </div>
+              <div class="payment-details">
+                <h3>Pay In-Person</h3>
+                <p>Pay at the clinic during your visit</p>
+                <div class="payment-badges">
+                  <span>Cash</span>
+                  <span>Card</span>
+                  <span>Installments</span>
+                </div>
+              </div>
+              <div class="payment-check" *ngIf="paymentInfo.method === 'in-person'">✓</div>
+            </div>
+          </div>
+
+          <!-- Online Payment Form -->
+          <div *ngIf="paymentInfo.method === 'online'" class="payment-form-wrapper">
+            <div class="secure-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Secured by Paymob - Your payment information is encrypted</span>
+            </div>
+
+            <form class="booking-form luxury-form">
+              <div class="form-group">
+                <label for="cardName">Cardholder Name *</label>
+                <input
+                  type="text"
+                  id="cardName"
+                  [(ngModel)]="paymentInfo.cardName"
+                  name="cardName"
+                  placeholder="Name as it appears on card"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="cardNumber">Card Number *</label>
+                <input
+                  type="text"
+                  id="cardNumber"
+                  [(ngModel)]="paymentInfo.cardNumber"
+                  name="cardNumber"
+                  placeholder="1234 5678 9012 3456"
+                  maxlength="19"
+                  required
+                />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="expiryDate">Expiry Date *</label>
+                  <input
+                    type="text"
+                    id="expiryDate"
+                    [(ngModel)]="paymentInfo.expiryDate"
+                    name="expiryDate"
+                    placeholder="MM/YY"
+                    maxlength="5"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="cvv">CVV *</label>
+                  <input
+                    type="text"
+                    id="cvv"
+                    [(ngModel)]="paymentInfo.cvv"
+                    name="cvv"
+                    placeholder="123"
+                    maxlength="3"
+                    required
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="booking-actions">
+            <button type="button" class="btn btn--outline" (click)="backToInfo()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Back to Details</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn--solid btn--luxury"
+              (click)="processPayment()"
+              [disabled]="!canCompletePayment() || isProcessingPayment"
+            >
+              <span *ngIf="!isProcessingPayment">
+                Book Now
+              </span>
+              <span *ngIf="isProcessingPayment" class="processing">
+                <span class="spinner"></span>
+                Processing...
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+    <!-- Booking Summary Sidebar -->
+    <aside class="booking-summary">
+      <h3>Booking Summary</h3>
+      
+      <div class="summary-services">
+        <div *ngFor="let item of cartItems$ | async" class="summary-item">
+          <span>{{ item.name }} <span *ngIf="item.quantity > 1" class="qty-badge">×{{ item.quantity }}</span></span>
+          <span>{{ item.price * item.quantity }} EGP</span>
+        </div>
+      </div>
+
+      <div class="summary-total">
+        <span>Total</span>
+        <span class="total-amount">{{ getCartTotal() }} EGP</span>
+      </div>
+
+      <div class="summary-info">
+        <div class="info-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>Confirmation within 24 hours</span>
+        </div>
+        <div class="info-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Free consultation included</span>
+        </div>
+        <div class="info-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Flexible rescheduling policy</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<app-footer></app-footer>
+<app-cart-flyout></app-cart-flyout>
