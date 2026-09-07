@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewEncapsulation, PLATFORM_ID, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewEncapsulation, PLATFORM_ID, inject, NgZone } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -30,6 +30,8 @@ export class ForhimComponent implements OnInit, AfterViewInit {
   doctorsPerPage = 4;
   showAllDoctors = false;
   private servicesMap: Map<string, string> = new Map();
+
+  private zone = inject(NgZone);
 
   constructor(
     private router: Router,
@@ -251,7 +253,7 @@ export class ForhimComponent implements OnInit, AfterViewInit {
 
       const restart = () => {
         if (timer) clearInterval(timer);
-        if (!reduce) timer = setInterval(() => go(i + 1), 5000);
+        if (!reduce) this.zone.runOutsideAngular(() => { timer = setInterval(() => go(i + 1), 5000); });
       };
 
       const nx = hero.querySelector('.hero-next') as HTMLElement;
@@ -417,7 +419,7 @@ export class ForhimComponent implements OnInit, AfterViewInit {
     nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
 
     // Auto-advance every 5 seconds
-    setInterval(() => showSlide(currentIndex + 1), 5000);
+    this.zone.runOutsideAngular(() => { setInterval(() => showSlide(currentIndex + 1), 5000); });
 
     showSlide(0);
   }

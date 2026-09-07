@@ -85,7 +85,7 @@
          [class.d2]="i === 2"
          [class.d3]="i === 3"
          [href]="card.link || 'services.html'">
-        <img [src]="card.image" *ngIf="card.image" [alt]="card.title">
+        <img [src]="card.image" *ngIf="card.image" [alt]="card.title" loading="lazy">
         <div class="in">
           <h3><span class="em">{{card.title}}</span></h3>
           <p>{{card.description}}</p>
@@ -111,7 +111,7 @@
          [class.d2]="i === 2"
          [class.d3]="i === 3"
          [href]="card.link || 'services.html'">
-        <img [src]="card.image" *ngIf="card.image" [alt]="card.title">
+        <img [src]="card.image" *ngIf="card.image" [alt]="card.title" loading="lazy">
         <div class="in">
           <span class="num">{{(i + 1).toString().padStart(2, '0')}}</span>
           <h3 [innerHTML]="card.title"></h3>
@@ -399,7 +399,7 @@
 
 <!-- ══ SERVICES CTA (menu moved to services.html) ══ -->
 <section class="svc-cta" data-screen-label="Services CTA" *ngIf="pageContent.services_cta_title || pageContent.services_cta_eyebrow">
-  <div class="svc-cta-bg"><img [src]="pageContent.services_cta_bg_image" *ngIf="pageContent.services_cta_bg_image" alt="Services background"></div>
+  <div class="svc-cta-bg"><img [src]="pageContent.services_cta_bg_image" *ngIf="pageContent.services_cta_bg_image" alt="Services background" loading="lazy"></div>
   <div class="svc-cta-in reveal">
     <span class="eyebrow c">{{pageContent.services_cta_eyebrow}}</span>
     <h2 class="h-l">{{pageContent.services_cta_title}}<br><span class="em">{{pageContent.services_cta_title_em}}</span></h2>

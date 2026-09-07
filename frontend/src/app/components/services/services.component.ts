@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, AfterViewInit, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { Component, ViewEncapsulation, AfterViewInit, OnDestroy, OnInit, PLATFORM_ID, inject, NgZone } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -53,6 +53,8 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
   // Timers
   private offerInterval: any;
   private heroSliderInterval: any;
+
+  private zone = inject(NgZone);
 
   constructor(
     private router: Router,
@@ -354,9 +356,11 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateHeroDots();
 
     // Start auto-rotation
-    this.heroSliderInterval = setInterval(() => {
-      this.nextSlide();
-    }, 5000);
+    this.zone.runOutsideAngular(() => {
+      this.heroSliderInterval = setInterval(() => {
+        this.nextSlide();
+      }, 5000);
+    });
   }
 
   nextSlide() {
@@ -412,9 +416,11 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateOfferDots();
 
     // Start auto-rotation
-    this.offerInterval = setInterval(() => {
-      this.nextOffer();
-    }, 5000);
+    this.zone.runOutsideAngular(() => {
+      this.offerInterval = setInterval(() => {
+        this.nextOffer();
+      }, 5000);
+    });
   }
 
   nextOffer() {

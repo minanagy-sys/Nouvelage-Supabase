@@ -23,7 +23,7 @@
 
     <div *ngFor="let item of items" class="cart-item">
       <div class="item-image">
-        <img [src]="item.image || 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=200&h=200&fit=crop&q=80'" [alt]="item.name">
+        <img [src]="item.image || 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=200&h=200&fit=crop&q=80'" [alt]="item.name" loading="lazy">
       </div>
       <div class="item-details">
         <h4>{{ item.name }}</h4>
