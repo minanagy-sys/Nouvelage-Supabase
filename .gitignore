@@ -78,3 +78,7 @@ database.sql
 
 # Angular build cache
 .angular/
+
+# generated live-data exports (run backend/scripts/export-live-to-mysql.js)
+nouvelage-live-data.sql
+frontend/public/assets/img/media-library/live-import/
