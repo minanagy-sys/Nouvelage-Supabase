@@ -1853,13 +1853,19 @@ export class AdminDashboardComponent implements OnInit {
   uploadBlogImage(event: any): void {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/') && this.selectedBlog) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        if (this.selectedBlog && e.target?.result) {
-          this.selectedBlog.featuredImage = e.target.result as string;
-        }
-      };
-      reader.readAsDataURL(file);
+      // Upload through the API media pipeline and keep the file path —
+      // featured images are never stored as base64.
+      const postSlug = this.selectedBlog.slug || this.generateSlug(this.selectedBlog.title || 'post');
+      this.mediaService.saveBlogFeaturedImage(file, postSlug)
+        .then(path => {
+          if (this.selectedBlog) {
+            this.selectedBlog.featuredImage = path;
+          }
+        })
+        .catch(error => {
+          console.error('Featured image upload failed:', error);
+          this.saveMessage = 'Error uploading featured image';
+        });
     }
   }
 
@@ -3106,83 +3112,34 @@ export class AdminDashboardComponent implements OnInit {
         console.log('📤 Uploading to general media library');
       }
 
-      // Upload file using MediaService and save metadata to Supabase
+      // Upload through the API media pipeline — the server converts to WebP,
+      // writes the responsive variants, and records the media_library row
+      // (paths only, never base64), so no separate metadata insert is needed.
       uploadPromise
         .then(filePath => {
           console.log('✅ File uploaded successfully:', filePath);
-          console.log('📤 Saving metadata to Supabase...');
+          this.saveMessage = 'Media file uploaded successfully!';
+          this.loadMediaLibrary(); // Reload media library from the database
 
-          // Save metadata to Supabase with the uploaded path
-          const reader = new FileReader();
-          reader.onload = (e: any) => {
-            // Extract just the filename from the full path
-            const pathParts = filePath.split('/');
-            const filename = pathParts[pathParts.length - 1];
-            // Get the directory path (everything except filename)
-            const directoryPath = '/' + pathParts.slice(0, pathParts.length - 1).join('/').replace(/^\/+/, '');
+          // If this upload was from the media picker modal, call the callback to update the entity
+          if (this.mediaPickerCallback) {
+            console.log('📞 Calling media picker callback with path:', filePath);
+            this.mediaPickerCallback(filePath);
 
-            const mediaFile = {
-              // Generate string ID for media_library (uses VARCHAR, not UUID)
-              id: 'media_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-              filename: filename,
-              path: directoryPath + '/',
-              full_path: filePath,
-              type: file.type,
-              size: file.size,
-              data_url: e.target?.result as string,
-              alt_text: ''
-            };
-
-            console.log('📤 Saving media file to Supabase:', {
-              id: mediaFile.id,
-              filename: mediaFile.filename,
-              path: mediaFile.path,
-              full_path: mediaFile.full_path,
-              type: mediaFile.type,
-              size: mediaFile.size
-            });
-
-            // Save to Supabase
-            this.supabaseService.uploadMedia(mediaFile as any).subscribe({
-              next: (created) => {
-                if (created) {
-                  console.log('✅ Metadata saved to Supabase');
-                  console.log('🎉 Upload complete! File path:', filePath);
-                  this.saveMessage = 'Media file uploaded successfully!';
-                  this.loadMediaLibrary(); // Reload media library from Supabase
-
-                  // If this upload was from the media picker modal, call the callback to update the entity
-                  if (this.mediaPickerCallback) {
-                    console.log('📞 Calling media picker callback with path:', filePath);
-                    this.mediaPickerCallback(filePath);
-
-                    // Auto-save the entity after updating the image path (keep editor open)
-                    if (category === 'doctor' && this.selectedDoctor && this.editingDoctorId) {
-                      console.log('💾 Auto-saving doctor with new profile image...');
-                      this.saveDoctorSilently();
-                    } else if (category === 'blog' && this.selectedBlog) {
-                      console.log('💾 Auto-saving blog post with new featured image...');
-                      this.saveBlog();
-                    } else if (category === 'service' && this.selectedServiceData) {
-                      console.log('💾 Auto-saving service with new image...');
-                      this.saveServiceDataSilently();
-                    }
-                  }
-                } else {
-                  console.error('❌ Failed to save metadata to Supabase');
-                  this.saveMessage = 'Error saving metadata to Supabase';
-                }
-                this.isLoading = false;
-                setTimeout(() => this.saveMessage = '', 3000);
-              },
-              error: (err) => {
-                console.error('❌ Error saving to Supabase:', err);
-                this.saveMessage = 'Error: ' + (err.message || JSON.stringify(err));
-                this.isLoading = false;
-              }
-            });
-          };
-          reader.readAsDataURL(file);
+            // Auto-save the entity after updating the image path (keep editor open)
+            if (category === 'doctor' && this.selectedDoctor && this.editingDoctorId) {
+              console.log('💾 Auto-saving doctor with new profile image...');
+              this.saveDoctorSilently();
+            } else if (category === 'blog' && this.selectedBlog) {
+              console.log('💾 Auto-saving blog post with new featured image...');
+              this.saveBlog();
+            } else if (category === 'service' && this.selectedServiceData) {
+              console.log('💾 Auto-saving service with new image...');
+              this.saveServiceDataSilently();
+            }
+          }
+          this.isLoading = false;
+          setTimeout(() => this.saveMessage = '', 3000);
         })
         .catch(err => {
           console.error('❌ Error uploading file:', err);

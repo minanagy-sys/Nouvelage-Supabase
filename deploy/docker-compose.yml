@@ -1,0 +1,57 @@
+# Nouvelage — production stack: MySQL 8.4 + Node API.
+# The Angular build is static files served by nginx (see nginx.conf.example);
+# nginx also proxies /api to the API container.
+#
+#   cp ../backend/.env.example .env   # fill in real secrets first
+#   docker compose up -d --build
+#
+# Never run `docker system prune` or `docker volume prune` on the droplet.
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-nouvelage}
+      MYSQL_USER: ${DB_USER:-nouvelage}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - nouvelage-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-nouvelage}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-nouvelage}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:?set ADMIN_JWT_SECRET in .env}
+      IP_HASH_SALT: ${IP_HASH_SALT:?set IP_HASH_SALT in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://www.nouvelage.clinic,https://nouvelage.clinic}
+      UPLOADS_DIR: /data/uploads
+      BUILD_ID: ${BUILD_ID:-compose}
+    volumes:
+      # Same tree nginx serves at /assets/img — uploads survive redeploys.
+      - ${UPLOADS_HOST_DIR:-./uploads}:/data/uploads
+    ports:
+      - "127.0.0.1:4000:4000"
+
+volumes:
+  nouvelage-mysql:

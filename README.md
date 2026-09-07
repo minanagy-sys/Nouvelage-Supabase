@@ -1,27 +1,75 @@
-# NouvelageAngular
+# Nouvelage
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Luxury aesthetic clinic website and admin dashboard.
 
-## Development server
+**Built with: Angular 18 (frontend) · Node.js / Express 5 (backend) · MySQL 8.4 (database).**
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+The site keeps its original structure, pages, dashboard and content; only the
+data platform changed (previously self-hosted Supabase). Images are stored as
+WebP files on disk with responsive variants — the database holds paths only,
+never image bytes or base64.
 
-## Code scaffolding
+```
+nouvelage/
+├── frontend/   Angular app (public site + admin dashboard)
+├── backend/    Express 5 API + MySQL schema, migrations, ops scripts
+│   ├── db/         schema.sql · admin-schema.sql · seed.sql · migrations/
+│   ├── scripts/    setup-db · migrate · create-admin · import-legacy · import-media
+│   └── src/        API source (routes, admin CRUD registry, media pipeline)
+├── deploy/     docker-compose (MySQL + API) + nginx server block example
+└── MIGRATION.md  Runbook: moving the live Supabase data into MySQL
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Development
+
+Backend (API on http://localhost:4000):
+
+```bash
+cd backend
+cp .env.example .env          # fill in DB credentials and secrets
+npm install
+npm run setup-db              # create database, apply schema + seed
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='min-10-chars' npm run create-admin
+npm run dev
+```
+
+Frontend (Angular dev server on http://localhost:4200):
+
+```bash
+cd frontend
+npm install
+npm start
+```
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+cd frontend && npm run build      # → frontend/dist/nouvelage-angular
+```
 
-## Running unit tests
+The API serves uploaded media at `/assets/img/...` in development; in
+production nginx serves the Angular build and the uploads tree directly and
+proxies `/api` to the Node API (see `deploy/nginx.conf.example`).
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Production
 
-## Running end-to-end tests
+```bash
+cd deploy
+cp ../backend/.env.example .env   # real secrets: DB_PASSWORD, ADMIN_JWT_SECRET, IP_HASH_SALT
+docker compose up -d --build
+docker compose exec api node scripts/setup-db.js
+docker compose exec api node scripts/migrate.js
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Non-negotiables carried from the security review:
 
-## Further help
+- `ADMIN_JWT_SECRET` is required in production — the API refuses to start without it
+- `create-admin.js` reads the password from `ADMIN_PASSWORD` in the environment, never argv
+- bcrypt cost 12; admin accounts re-checked against the database on every request
+- form submitter IPs stored only as salted SHA-256 hashes
+- image bytes never in the database — paths only
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Migrating the live data
+
+See [MIGRATION.md](MIGRATION.md) for the full runbook (read-only dump from the
+droplet, transform, import, reconcile, media rsync).

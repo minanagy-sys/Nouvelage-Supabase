@@ -7,7 +7,6 @@ export interface MediaFile {
   filename: string;
   path: string; // e.g., '/assets/img/blog/', '/assets/img/services/'
   fullPath: string; // complete path with filename
-  dataUrl: string; // base64 data
   size: number;
   type: string; // image/jpeg, image/png, etc.
   uploadedAt: string;

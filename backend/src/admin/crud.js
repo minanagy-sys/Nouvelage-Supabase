@@ -141,10 +141,12 @@ export async function updateRow(resource, id, body) {
   const columns = Object.keys(values);
   if (!columns.length) return getRow(resource, id);
 
+  // mysql2 named placeholders must start with a letter, and no registry
+  // column is named "whereId", so the WHERE param can never collide.
   const sql = `UPDATE \`${resource.table}\`
                   SET ${columns.map((c) => `\`${c}\` = :${c}`).join(', ')}
-                WHERE id = :__id`;
-  const result = await query(sql, { ...values, __id: id });
+                WHERE id = :whereId`;
+  const result = await query(sql, { ...values, whereId: id });
   invalidate(resource.table);
   if (!result.affectedRows) return null;
   return getRow(resource, id);

@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
+import { MediaService } from '../../services/media.service';
 
 @Component({
   selector: 'app-wysiwyg-editor',
@@ -38,6 +39,8 @@ export class WysiwygEditorComponent implements ControlValueAccessor {
 
   onChange: any = () => {};
   onTouched: any = () => {};
+
+  constructor(private mediaService: MediaService) {}
 
   writeValue(value: any): void {
     this.content = value || '';
@@ -134,13 +137,16 @@ export class WysiwygEditorComponent implements ControlValueAccessor {
   uploadImage(event: any): void {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const base64 = e.target.result;
-        document.execCommand('insertImage', false, base64);
-        this.updateContent();
-      };
-      reader.readAsDataURL(file);
+      // Upload through the API media pipeline and insert the file URL —
+      // never base64 — so post content stays lightweight.
+      this.mediaService.saveGeneralImage(file, 'blog-content')
+        .then(path => {
+          document.execCommand('insertImage', false, path);
+          this.updateContent();
+        })
+        .catch(error => {
+          console.error('Image upload failed:', error);
+        });
     }
   }
 

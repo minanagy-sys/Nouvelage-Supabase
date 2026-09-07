@@ -210,7 +210,6 @@ export interface MediaFile {
   filename: string;
   path?: string;
   full_path?: string;
-  data_url?: string;
 
   // File Info
   size?: number;
