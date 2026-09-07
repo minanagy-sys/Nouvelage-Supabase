@@ -96,8 +96,11 @@ const TABLES = {
       'price', 'price_unit', 'benefits', 'procedure_steps', 'faq', 'category', 'parent_service',
       'tags', 'featured', 'order_index', 'is_active', 'meta_title', 'meta_description',
       'meta_keywords', 'created_at', 'updated_at',
+      // live-drifted columns the dashboard editor and public page use
+      'card_title', 'card_number', 'card_ribbon', 'card_description', 'card_image', 'card_price', 'card_button_text', 'detail_title', 'detail_subtitle', 'detail_tagline', 'hero_background_image', 'modal_title', 'meta_duration', 'meta_downtime', 'meta_lasts', 'meta_sessions', 'price_details', 'offer_title', 'offer_subtitle', 'offer_eyebrow', 'offer_description', 'offer_cover_image', 'offer_cta_text', 'offer_cta_link', 'cta_button_text', 'whatsapp_button_text', 'whatsapp_number', 'show_price', 'show_in_grid', 'how_it_works_steps', 'timeline', 'what_you_achieve', 'products_used', 'specialist_doctor_ids',
     ],
-    json: ['gallery', 'benefits', 'procedure_steps', 'faq', 'tags'],
+    json: ['gallery', 'benefits', 'procedure_steps', 'faq', 'tags',
+           'how_it_works_steps', 'timeline', 'what_you_achieve', 'products_used', 'specialist_doctor_ids'],
   },
   branches: {
     order: 'order_index',

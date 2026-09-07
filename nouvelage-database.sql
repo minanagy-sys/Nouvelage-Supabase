@@ -23,6 +23,13 @@
 --
 -- Conventions
 --   * No CREATE DATABASE / USE here: setup-db.js and migrate.js select the
+
+-- ============================================================================
+-- NOUVELAGE — MySQL 8.4 schema (public content tables)
+-- Translated from backend/db/supabase-schema-reference.sql (Postgres/Supabase).
+--
+-- Conventions
+--   * No CREATE DATABASE / USE here: setup-db.js and migrate.js select the
 --     configured database before applying this file, so DB_NAME stays real.
 --   * Tables that carried Postgres UUID keys keep CHAR(36) primary keys —
 --     doctors, blog posts and bundles are addressed by id/slug in URLs and
@@ -260,6 +267,42 @@ CREATE TABLE IF NOT EXISTS services (
   category         VARCHAR(100)  NULL,
   parent_service   VARCHAR(200)  NULL,
   tags             JSON          NOT NULL,
+
+  -- Live-drifted fields the dashboard editor and public services page use
+  card_title            VARCHAR(200) NULL,
+  card_number           VARCHAR(10)  NULL,
+  card_ribbon           VARCHAR(50)  NULL,
+  card_description      TEXT         NULL,
+  card_image            VARCHAR(500) NULL,
+  card_price            VARCHAR(50)  NULL,
+  card_button_text      VARCHAR(100) NULL,
+  detail_title          VARCHAR(300) NULL,
+  detail_subtitle       VARCHAR(500) NULL,
+  detail_tagline        VARCHAR(500) NULL,
+  hero_background_image VARCHAR(500) NULL,
+  modal_title           VARCHAR(200) NULL,
+  meta_duration         VARCHAR(100) NULL,
+  meta_downtime         VARCHAR(100) NULL,
+  meta_lasts            VARCHAR(100) NULL,
+  meta_sessions         VARCHAR(100) NULL,
+  how_it_works_steps    JSON         NULL,
+  timeline              JSON         NULL,
+  what_you_achieve      JSON         NULL,
+  products_used         JSON         NULL,
+  specialist_doctor_ids JSON         NULL,
+  price_details         TEXT         NULL,
+  show_price            TINYINT(1)   NOT NULL DEFAULT 1,
+  show_in_grid          TINYINT(1)   NOT NULL DEFAULT 1,
+  offer_title           VARCHAR(300) NULL,
+  offer_subtitle        VARCHAR(500) NULL,
+  offer_eyebrow         VARCHAR(200) NULL,
+  offer_description     TEXT         NULL,
+  offer_cover_image     VARCHAR(500) NULL,
+  offer_cta_text        VARCHAR(100) NULL,
+  offer_cta_link        VARCHAR(300) NULL,
+  cta_button_text       VARCHAR(100) NULL,
+  whatsapp_button_text  VARCHAR(100) NULL,
+  whatsapp_number       VARCHAR(50)  NULL,
 
   featured         TINYINT(1)    NOT NULL DEFAULT 0,
   order_index      INT           NOT NULL DEFAULT 0,

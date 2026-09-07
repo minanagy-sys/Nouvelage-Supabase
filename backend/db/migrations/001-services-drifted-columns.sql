@@ -1,0 +1,40 @@
+-- The live services table evolved well beyond the original schema file:
+-- the dashboard editor and the public services page rely on card/detail/
+-- meta/offer fields and five JSON arrays that the conversion initially
+-- dropped. This migration brings the MySQL table up to the live shape.
+
+ALTER TABLE services
+  ADD COLUMN card_title            VARCHAR(200) NULL AFTER name,
+  ADD COLUMN card_number           VARCHAR(10)  NULL AFTER card_title,
+  ADD COLUMN card_ribbon           VARCHAR(50)  NULL AFTER card_number,
+  ADD COLUMN card_description      TEXT         NULL AFTER card_ribbon,
+  ADD COLUMN card_image            VARCHAR(500) NULL AFTER card_description,
+  ADD COLUMN card_price            VARCHAR(50)  NULL AFTER card_image,
+  ADD COLUMN card_button_text      VARCHAR(100) NULL AFTER card_price,
+  ADD COLUMN detail_title          VARCHAR(300) NULL AFTER card_button_text,
+  ADD COLUMN detail_subtitle       VARCHAR(500) NULL AFTER detail_title,
+  ADD COLUMN detail_tagline        VARCHAR(500) NULL AFTER detail_subtitle,
+  ADD COLUMN hero_background_image VARCHAR(500) NULL AFTER detail_tagline,
+  ADD COLUMN modal_title           VARCHAR(200) NULL AFTER hero_background_image,
+  ADD COLUMN meta_duration         VARCHAR(100) NULL AFTER modal_title,
+  ADD COLUMN meta_downtime         VARCHAR(100) NULL AFTER meta_duration,
+  ADD COLUMN meta_lasts            VARCHAR(100) NULL AFTER meta_downtime,
+  ADD COLUMN meta_sessions         VARCHAR(100) NULL AFTER meta_lasts,
+  ADD COLUMN how_it_works_steps    JSON         NULL AFTER meta_sessions,
+  ADD COLUMN timeline              JSON         NULL AFTER how_it_works_steps,
+  ADD COLUMN what_you_achieve      JSON         NULL AFTER timeline,
+  ADD COLUMN products_used         JSON         NULL AFTER what_you_achieve,
+  ADD COLUMN specialist_doctor_ids JSON         NULL AFTER products_used,
+  ADD COLUMN price_details         TEXT         NULL AFTER specialist_doctor_ids,
+  ADD COLUMN show_price            TINYINT(1)   NOT NULL DEFAULT 1 AFTER price_details,
+  ADD COLUMN show_in_grid          TINYINT(1)   NOT NULL DEFAULT 1 AFTER show_price,
+  ADD COLUMN offer_title           VARCHAR(300) NULL AFTER show_in_grid,
+  ADD COLUMN offer_subtitle        VARCHAR(500) NULL AFTER offer_title,
+  ADD COLUMN offer_eyebrow         VARCHAR(200) NULL AFTER offer_subtitle,
+  ADD COLUMN offer_description     TEXT         NULL AFTER offer_eyebrow,
+  ADD COLUMN offer_cover_image     VARCHAR(500) NULL AFTER offer_description,
+  ADD COLUMN offer_cta_text        VARCHAR(100) NULL AFTER offer_cover_image,
+  ADD COLUMN offer_cta_link        VARCHAR(300) NULL AFTER offer_cta_text,
+  ADD COLUMN cta_button_text       VARCHAR(100) NULL AFTER offer_cta_link,
+  ADD COLUMN whatsapp_button_text  VARCHAR(100) NULL AFTER cta_button_text,
+  ADD COLUMN whatsapp_number       VARCHAR(50)  NULL AFTER whatsapp_button_text;
