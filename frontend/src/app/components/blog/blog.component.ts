@@ -28,7 +28,11 @@ export class BlogComponent implements OnInit {
   currentYear: number = new Date().getFullYear();
   cartCount: number = 0;
   pageContent: any = {};
-  blogPosts: BlogPost[] = [
+  blogPosts: BlogPost[] = [];
+
+  // Shown only if the API has no published posts (or is unreachable) — never
+  // rendered before the API answers, so real posts don't flash-swap on load.
+  private readonly fallbackPosts: BlogPost[] = [
     {
       id: 'laser-hair-removal-egypt',
       title: 'Laser Hair Removal in Egypt: Prices, Sessions & How to Choose the Right Clinic',
@@ -82,11 +86,13 @@ export class BlogComponent implements OnInit {
           console.log('✅ Loaded', this.blogPosts.length, 'published blog posts');
         } else {
           console.log('⚠️ No published blog posts found, using hardcoded fallback');
+          this.blogPosts = this.fallbackPosts;
         }
       },
       error: (err) => {
         console.error('Failed to load blog posts:', err);
         console.log('⚠️ Using hardcoded fallback due to error');
+        this.blogPosts = this.fallbackPosts;
       }
     });
   }

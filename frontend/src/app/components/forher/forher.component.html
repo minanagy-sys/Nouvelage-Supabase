@@ -48,10 +48,10 @@
   <button class="hero-arrow hero-next" aria-label="Next slide">›</button>
   <div class="hero-dots" role="tablist" aria-label="Hero slides"></div>
   <div class="hero-inner" style="padding-left:var(--pad);padding-right:var(--pad)">
-    <div class="reveal" data-comment-anchor="95276b5743-div"><span class="eyebrow">Nouvel Age · Cairo · Giza · Alexandria</span></div>
-    <h1 class="h-xl reveal d1">Where Beauty Meets <span class="em">Medical Excellence</span></h1>
-    <p class="hero-slogan reveal d1"><span class="script">Nouvel Âge, Nouvelle Vie</span></p>
-    <p class="sub reveal d2">Discover the art of beauty and wellness at Nouvel Age, where advanced technology meets deeply personalized care — across skin, injectables, laser, and hair.</p>
+    <div class="reveal" data-comment-anchor="95276b5743-div"><span class="eyebrow">{{pageContent.hero_eyebrow || 'Nouvel Age · Cairo · Giza · Alexandria'}}</span></div>
+    <h1 class="h-xl reveal d1">{{pageContent.hero_title || 'Where Beauty Meets'}} <span class="em">{{pageContent.hero_title_em || 'Medical Excellence'}}</span></h1>
+    <p class="hero-slogan reveal d1"><span class="script">{{pageContent.hero_slogan || 'Nouvel Âge, Nouvelle Vie'}}</span></p>
+    <p class="sub reveal d2">{{pageContent.hero_subtitle || 'Discover the art of beauty and wellness at Nouvel Age, where advanced technology meets deeply personalized care — across skin, injectables, laser, and hair.'}}</p>
     <div class="hero-actions reveal d3">
       <a *ngFor="let action of pageContent.hero_actions" 
          class="btn {{action.style}}" 
