@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ViewEncapsulation, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
 import { ContentService } from '../../shared/services/content.service';
@@ -19,6 +19,9 @@ import { GoogleSheetsService } from '../../services/google-sheets.service';
   encapsulation: ViewEncapsulation.None
 })
 export class BundlesComponent implements OnInit {
+  // SSR: hero slides come from localStorage, which doesn't exist on the server.
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   pageContent: any = {};
   bundles: any[] = [];
   allBundles: any[] = [];
@@ -124,6 +127,7 @@ export class BundlesComponent implements OnInit {
   }
 
   loadHeroSlides(): void {
+    if (!this.isBrowser) return;
     // Load bundles for hero slider (offers slider) - bundles with showInSlider=true
     const bundlesData = localStorage.getItem('bundles');
     const bundles = bundlesData ? JSON.parse(bundlesData) : [];

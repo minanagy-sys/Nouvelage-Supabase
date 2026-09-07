@@ -1,7 +1,7 @@
-import { Component, OnInit, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewEncapsulation, PLATFORM_ID, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Router, RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
@@ -21,6 +21,9 @@ import { BookingsService } from '../../admin/services/bookings.service';
   encapsulation: ViewEncapsulation.None
 })
 export class ForherComponent implements OnInit, AfterViewInit {
+  // SSR: lifecycle hooks also run on the server — gate DOM work and timers.
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   // Page content from CMS
   pageContent: any = {};
 
@@ -224,10 +227,14 @@ export class ForherComponent implements OnInit, AfterViewInit {
         // Re-run the stat counters now that hero_stats have rendered — the
         // ngAfterViewInit pass can run before this async Supabase data arrives,
         // which left the numbers stuck at 0 until a refresh.
-        setTimeout(() => this.initCounters(), 300);
+        if (this.isBrowser) {
+          setTimeout(() => this.initCounters(), 300);
+        }
         // Reload widget and doctors after content is loaded
         this.loadDoctors();
-        setTimeout(() => this.reloadJotFormWidget(), 3000);
+        if (this.isBrowser) {
+          setTimeout(() => this.reloadJotFormWidget(), 3000);
+        }
       });
   }
 
@@ -290,6 +297,7 @@ export class ForherComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
     // Wait for DOM and external scripts to be ready
     setTimeout(() => {
       this.initHeroSlideshow();
@@ -487,6 +495,7 @@ export class ForherComponent implements OnInit, AfterViewInit {
   }
 
   private initCounters(): void {
+    if (!this.isBrowser) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const co = new IntersectionObserver((es) => {
       es.forEach(e => {
@@ -851,6 +860,7 @@ export class ForherComponent implements OnInit, AfterViewInit {
   }
 
   private reloadJotFormWidget(): void {
+    if (!this.isBrowser) return;
     console.log('🔄 reloadJotFormWidget() called');
     console.log('📄 pageContent:', this.pageContent);
     console.log('📝 reviews_embed_code:', this.pageContent.reviews_embed_code);

@@ -1,7 +1,7 @@
-import { Component, ViewEncapsulation, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
+import { Component, ViewEncapsulation, AfterViewInit, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Router, RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
@@ -23,6 +23,8 @@ import { BookingsService } from '../../admin/services/bookings.service';
   encapsulation: ViewEncapsulation.None
 })
 export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
+  // SSR: lifecycle hooks also run on the server, where DOM/storage/timers don't exist.
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   // Data
   services = SERVICES_DATA;
@@ -120,7 +122,7 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('❌ Error loading parent services:', error);
         // Fallback to localStorage
-        const saved = localStorage.getItem('parentServices');
+        const saved = this.isBrowser ? localStorage.getItem('parentServices') : null;
         this.parentServices = saved ? JSON.parse(saved) : [];
         this.parentServices.sort((a, b) => a.order - b.order);
       }
@@ -290,7 +292,7 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
       error: (err) => {
         console.error('❌ Error loading bundles for hero slider:', err);
         // Fallback to localStorage
-        const bundlesData = localStorage.getItem('bundles');
+        const bundlesData = this.isBrowser ? localStorage.getItem('bundles') : null;
         const bundles = bundlesData ? JSON.parse(bundlesData) : [];
         this.heroSlides = bundles
           .filter((b: any) => b.showInSlider && b.isActive)
@@ -325,6 +327,7 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    if (!this.isBrowser) return;
     this.initHeroSlider();
     this.initOfferSlider();
     this.initModals();
@@ -332,6 +335,7 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (!this.isBrowser) return;
     if (this.offerInterval) {
       clearInterval(this.offerInterval);
     }

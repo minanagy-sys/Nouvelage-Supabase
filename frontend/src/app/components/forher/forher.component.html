@@ -118,7 +118,7 @@
           <span class="x">{{ card.buttonLabel }} →</span>
         </div>
       </a>
-    <div class="exp-more reveal"><a class="btn solid" [href]="pageContent.expertise_more.link"><span class="l">{{ pageContent.expertise_more.link_text }}</span><span class="ar">→</span></a></div>
+    <div class="exp-more reveal" *ngIf="pageContent.expertise_more && pageContent.expertise_more.link_text"><a class="btn solid" [href]="pageContent.expertise_more.link"><span class="l">{{ pageContent.expertise_more.link_text }}</span><span class="ar">→</span></a></div>
     </div>
   </div>
 </section>
