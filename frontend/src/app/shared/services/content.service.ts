@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE } from '../api-base';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import type {
   Bundle,
   ParentBundle,
@@ -27,7 +27,7 @@ import type {
   providedIn: 'root'
 })
 export class ContentService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = inject(API_BASE);
 
   constructor(private http: HttpClient) {}
 

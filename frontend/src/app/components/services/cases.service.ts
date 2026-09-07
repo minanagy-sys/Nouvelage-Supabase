@@ -82,6 +82,12 @@ export class CasesService {
    * Load all cases from the JSON file
    */
   private loadCases(): Observable<Case[]> {
+    // The cases JSON is a static browser asset with a relative URL, which
+    // cannot be fetched during server rendering — the gallery hydrates in
+    // the browser instead (it sits below the fold anyway).
+    if (typeof window === 'undefined') {
+      return of([]);
+    }
     if (!this.casesCache$) {
       this.casesCache$ = this.http.get<Case[]>('assets/cases-data.json').pipe(
         shareReplay(1) // Cache the result

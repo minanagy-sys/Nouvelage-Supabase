@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE } from '../../shared/api-base';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
 import { DemoModeService } from './demo-mode.service';
 
 /**
@@ -13,7 +13,7 @@ import { DemoModeService } from './demo-mode.service';
   providedIn: 'root'
 })
 export class AdminApiService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = inject(API_BASE);
 
   constructor(
     private http: HttpClient,

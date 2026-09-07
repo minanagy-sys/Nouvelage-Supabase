@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE } from '../../shared/api-base';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { environment } from '../../../environments/environment';
 
 /**
  * Admin-specific content service — the REST replacement for the old
@@ -16,7 +16,7 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class AdminContentService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = inject(API_BASE);
 
   constructor(private http: HttpClient) {}
 

@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE } from '../../shared/api-base';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, map, tap, catchError } from 'rxjs';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
 
 export interface AdminUser {
   id: string;
@@ -32,7 +32,7 @@ export class AdminAuthService {
   private currentUserSubject = new BehaviorSubject<AdminUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private accessToken: string | null = null;
-  private apiUrl = environment.apiUrl;
+  private apiUrl = inject(API_BASE);
 
   constructor(
     private http: HttpClient,

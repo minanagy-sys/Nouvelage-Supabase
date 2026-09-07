@@ -2,7 +2,12 @@
 
 Luxury aesthetic clinic website and admin dashboard.
 
-**Built with: Angular 18 (frontend) · Node.js / Express 5 (backend) · MySQL 8.4 (database).**
+**Built with: Angular 18 + SSR (frontend) · Node.js / Express 5 (backend) · MySQL 8.4 (database).**
+
+Public pages are **server-side rendered** per request — crawlers get full
+HTML with fresh database content, visitors get instant first paint, and the
+browser hydrates seamlessly. The admin dashboard stays client-side rendered
+behind its login.
 
 The site keeps its original structure, pages, dashboard and content; only the
 data platform changed (previously self-hosted Supabase). Images are stored as
@@ -44,12 +49,14 @@ npm start
 ## Build
 
 ```bash
-cd frontend && npm run build      # → frontend/dist/nouvelage-angular
+cd frontend && npm run build      # → frontend/dist/nouvelage-angular/{browser,server}
+npm run serve:ssr:nouvelage-angular   # SSR server on :4200 (SSR_PORT to change)
 ```
 
-The API serves uploaded media at `/assets/img/...` in development; in
-production nginx serves the Angular build and the uploads tree directly and
-proxies `/api` to the Node API (see `deploy/nginx.conf.example`).
+The SSR server needs the API running (`API_BASE_URL`, default
+http://127.0.0.1:4000/api). In production nginx serves static assets from
+`dist/nouvelage-angular/browser` directly, proxies pages to the SSR server
+and `/api` to the API (see `deploy/nginx.conf.example`).
 
 ## Production
 

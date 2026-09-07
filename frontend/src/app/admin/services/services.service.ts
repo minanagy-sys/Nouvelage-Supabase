@@ -140,10 +140,24 @@ export class ServicesService {
     this.initializeDefaultData();
   }
 
+  // localStorage is absent during server-side rendering; these helpers make
+  // every persistence call a safe no-op there.
+  private storageGet(key: string): string | null {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+  }
+
+  private storageSet(key: string, value: string): void {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+  }
+
+  private storageRemove(key: string): void {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+  }
+
   // ============ SERVICES ============
 
   getAllServices(): Service[] {
-    const data = localStorage.getItem(this.servicesKey);
+    const data = this.storageGet(this.servicesKey);
     return data ? JSON.parse(data) : [];
   }
 
@@ -232,7 +246,7 @@ export class ServicesService {
   // ============ OFFERS SLIDER ============
 
   getAllOffers(): ServiceOffer[] {
-    const data = localStorage.getItem(this.offersKey);
+    const data = this.storageGet(this.offersKey);
     return data ? JSON.parse(data) : [];
   }
 
@@ -286,11 +300,11 @@ export class ServicesService {
   // ============ HELPERS ============
 
   private saveServices(services: Service[]): void {
-    localStorage.setItem(this.servicesKey, JSON.stringify(services));
+    this.storageSet(this.servicesKey, JSON.stringify(services));
   }
 
   private saveOffers(offers: ServiceOffer[]): void {
-    localStorage.setItem(this.offersKey, JSON.stringify(offers));
+    this.storageSet(this.offersKey, JSON.stringify(offers));
   }
 
   private generateId(): string {
@@ -308,13 +322,13 @@ export class ServicesService {
 
   // Reset services to default data from live website
   resetServicesToDefaults(): void {
-    localStorage.removeItem(this.servicesKey);
+    this.storageRemove(this.servicesKey);
     this.initializeDefaultData();
   }
 
   private initializeDefaultData(): void {
     // Only initialize if no data exists
-    if (!localStorage.getItem(this.servicesKey)) {
+    if (!this.storageGet(this.servicesKey)) {
       const defaultServices: Service[] = [
         {
           id: 'svc_slim_age',
@@ -928,7 +942,7 @@ export class ServicesService {
       this.saveServices(defaultServices);
     }
 
-    if (!localStorage.getItem(this.offersKey)) {
+    if (!this.storageGet(this.offersKey)) {
       const defaultOffers: ServiceOffer[] = [
         {
           id: 'offer_1',

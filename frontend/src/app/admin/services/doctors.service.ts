@@ -75,6 +75,20 @@ export class DoctorsService {
     this.loadDoctors();
   }
 
+  // localStorage is absent during server-side rendering; these helpers make
+  // every persistence call a safe no-op there.
+  private storageGet(key: string): string | null {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+  }
+
+  private storageSet(key: string, value: string): void {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+  }
+
+  private storageRemove(key: string): void {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+  }
+
   private getInitialDoctors(): Doctor[] {
     // Deep-ish copy so runtime edits never mutate the shared fallback data.
     return INITIAL_DOCTORS.map(doctor => ({
@@ -84,7 +98,7 @@ export class DoctorsService {
   }
 
   private loadDoctors(): void {
-    const stored = localStorage.getItem('doctors_data');
+    const stored = this.storageGet('doctors_data');
     if (stored) {
       try {
         const loadedDoctors = JSON.parse(stored);
@@ -177,7 +191,7 @@ export class DoctorsService {
     }));
 
     try {
-      localStorage.setItem('doctors_data', JSON.stringify(doctorsToSave));
+      this.storageSet('doctors_data', JSON.stringify(doctorsToSave));
       console.log('Saved to localStorage successfully');
     } catch (error) {
       console.error('Failed to save to localStorage:', error);

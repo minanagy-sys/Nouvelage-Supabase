@@ -56,10 +56,20 @@ If changing it needs design/code judgement → git.
 ## The read path (why it's fast)
 
 ```
-visitor → nginx (static Angular files, images: microseconds, no Node)
-        → /api/content/* → Node in-memory cache (60s TTL) → MySQL (indexed)
-admin save → writes MySQL → invalidates the cache key → next visitor sees it
+visitor/crawler → nginx
+   static assets (js/css/images)  → disk, long cache headers
+   pages                          → Angular SSR server (10s nginx micro-cache)
+                                      → /api/content/* → API in-memory cache (60s)
+                                          → MySQL (indexed)
+browser after first paint → hydrates; API responses transferred with the
+   HTML are reused, so nothing is fetched twice
+admin save → writes MySQL → invalidates the API cache → next render is fresh
 ```
+
+Public pages are server-side rendered per request: crawlers index real HTML,
+social shares get correct previews, and first paint carries the content. The
+admin dashboard is deliberately client-side rendered — it's behind a login,
+has no SEO audience, and keeps its browser-heavy code out of the server.
 
 Three layers, each absorbing load before the next:
 
@@ -87,9 +97,7 @@ Each step is additive; none changes the architecture.
    put the API behind nginx upstream with 2+ Node processes.
 4. **Global audience** — CDN (Cloudflare) in front of nginx: images and
    static assets served from edge; `/api` passes through.
-5. **SEO becomes a growth channel** — add Angular SSR (`@angular/ssr`).
-   Purely additive; the API doesn't change.
-6. **Database growth** — MySQL read replica only if reporting/analytics
+5. **Database growth** — MySQL read replica only if reporting/analytics
    queries ever compete with the site. Content tables are small forever;
    only `bookings` grows, and it's indexed for the queries the dashboard runs.
 

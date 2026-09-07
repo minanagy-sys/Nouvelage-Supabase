@@ -59,7 +59,8 @@ export class HeaderComponent implements OnInit {
     console.log('checkScroll - currentUrl:', currentUrl, 'isLandingPage:', isLandingPage);
 
     if (isLandingPage) {
-      this.isScrolled = window.pageYOffset > 50;
+      // window is absent during server rendering; treat it as scroll = 0.
+      this.isScrolled = typeof window !== 'undefined' && window.pageYOffset > 50;
     } else {
       // Services, team, blog, contact, checkout, doctor detail pages always have background
       this.isScrolled = true;

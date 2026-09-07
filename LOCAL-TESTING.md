@@ -96,6 +96,21 @@ categories), so most pages start empty — that's expected. Real content
 arrives either by editing in the dashboard or by importing the live data
 (`MIGRATION.md`).
 
+## Testing SSR locally (optional)
+
+`npm start` runs the plain dev server (no SSR) — fastest for development.
+To test the real server-rendered output:
+
+```bash
+cd frontend
+npm run build
+API_BASE_URL=http://127.0.0.1:4000/api npm run serve:ssr:nouvelage-angular
+```
+
+Then open http://localhost:4200 — View Source now shows the full page HTML
+(doctors, bundles, blog content) instead of an empty app shell. The API must
+be running.
+
 ## Troubleshooting
 
 - **Port already in use** — change `PORT` in `backend/.env` and `apiUrl` in

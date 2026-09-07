@@ -53,5 +53,19 @@ services:
     ports:
       - "127.0.0.1:4000:4000"
 
+  ssr:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.ssr
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      SSR_PORT: 4200
+      # SSR renders fetch content from the API inside the compose network.
+      API_BASE_URL: http://api:4000/api
+    ports:
+      - "127.0.0.1:4200:4200"
+
 volumes:
   nouvelage-mysql:

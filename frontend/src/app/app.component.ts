@@ -15,6 +15,12 @@ export class AppComponent implements OnInit {
   constructor(private content: ContentService) {}
 
   ngOnInit(): void {
+    // Browser-only housekeeping — none of this exists (or matters) during
+    // server-side rendering.
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Clear all localStorage caches so every page loads fresh from the API
     this.clearAllCaches();
 
