@@ -61,7 +61,11 @@ export class AdminAuthService {
 
   logout(): void {
     this.clearSession();
-    this.router.navigate(['/admin/login']);
+    // Only bounce to the login screen from inside the admin area — a public
+    // visitor whose stale token gets rejected should stay on the page.
+    if (this.router.url.startsWith('/admin')) {
+      this.router.navigate(['/admin/login']);
+    }
   }
 
   getToken(): string | null {

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AdminContentService } from './admin-content.service';
+import { AdminAuthService } from './admin-auth.service';
+import { ContentService } from '../../shared/services/content.service';
 
 export interface BlogPost {
   id: string;
@@ -18,7 +20,7 @@ export interface BlogPost {
   status: 'draft' | 'published';
   readTime: string;
   relatedPosts: string[]; // Array of post IDs
-  // Flattened SEO fields (matches Supabase schema)
+  // Flattened SEO fields (matches the database schema)
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
@@ -26,59 +28,53 @@ export interface BlogPost {
   updatedAt: string;
 }
 
+/**
+ * Blog posts. Reads are context-aware: an anonymous visitor gets the PUBLIC
+ * published-posts endpoint; a logged-in admin gets the admin endpoint (which
+ * includes drafts). Writes are always admin-only. This keeps the public blog
+ * pages from ever touching /api/admin — a 401 there would bounce a visitor
+ * to the login screen.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class BlogService {
-  constructor(private adminSupabase: AdminContentService) {}
+  constructor(
+    private adminContent: AdminContentService,
+    private adminAuth: AdminAuthService,
+    private content: ContentService
+  ) {}
 
   getAllPosts(): Observable<BlogPost[]> {
-    return this.adminSupabase.getAllBlogPosts();
+    if (this.adminAuth.isAuthenticated()) {
+      return this.adminContent.getAllBlogPosts();
+    }
+    // Anonymous: same view Supabase RLS used to give — published posts only.
+    return this.getPublishedPosts();
   }
 
   getPublishedPosts(): Observable<BlogPost[]> {
-    // Filter for published posts only
-    return this.adminSupabase.getPublishedBlogPosts();
+    return this.content.getAllBlogPosts().pipe(
+      map(posts => posts.map(post => this.toCamel(post)))
+    );
   }
 
   getPostById(id: string): Observable<BlogPost | null> {
-    // Return Observable - components need to subscribe
-    return new Observable(observer => {
-      this.adminSupabase.getAllBlogPosts().subscribe({
-        next: (posts) => {
-          const post = posts.find(p => p.id === id) || null;
-          observer.next(post);
-          observer.complete();
-        },
-        error: (err) => observer.error(err)
-      });
-    });
+    return this.getAllPosts().pipe(
+      map(posts => posts.find(p => p.id === id) || null)
+    );
   }
 
   getPostBySlug(slug: string): Observable<BlogPost | null> {
-    return new Observable(observer => {
-      this.adminSupabase.getAllBlogPosts().subscribe({
-        next: (posts) => {
-          const post = posts.find(p => p.slug === slug) || null;
-          observer.next(post);
-          observer.complete();
-        },
-        error: (err) => observer.error(err)
-      });
-    });
+    return this.getAllPosts().pipe(
+      map(posts => posts.find(p => p.slug === slug) || null)
+    );
   }
 
   getPostsByCategory(category: string): Observable<BlogPost[]> {
-    return new Observable(observer => {
-      this.adminSupabase.getAllBlogPosts().subscribe({
-        next: (posts) => {
-          const filtered = posts.filter(p => p.category === category && p.status === 'published');
-          observer.next(filtered);
-          observer.complete();
-        },
-        error: (err) => observer.error(err)
-      });
-    });
+    return this.getAllPosts().pipe(
+      map(posts => posts.filter(p => p.category === category && p.status === 'published'))
+    );
   }
 
   addPost(post: BlogPost): Observable<any> {
@@ -91,15 +87,15 @@ export class BlogService {
       updatedAt: timestamp
     };
 
-    return this.adminSupabase.createBlogPost(newPost);
+    return this.adminContent.createBlogPost(newPost);
   }
 
   updatePost(id: string, updates: Partial<BlogPost>): Observable<boolean> {
-    return this.adminSupabase.updateBlogPost(id, updates);
+    return this.adminContent.updateBlogPost(id, updates);
   }
 
   deletePost(id: string): Observable<boolean> {
-    return this.adminSupabase.deleteBlogPost(id);
+    return this.adminContent.deleteBlogPost(id);
   }
 
   generateId(): string {
@@ -114,15 +110,18 @@ export class BlogService {
   }
 
   getCategories(): Observable<string[]> {
-    return new Observable(observer => {
-      this.getAllPosts().subscribe({
-        next: (posts) => {
-          const categories = posts.map(post => post.category).filter(cat => cat);
-          observer.next([...new Set(categories)].sort());
-          observer.complete();
-        },
-        error: (err) => observer.error(err)
-      });
-    });
+    return this.getAllPosts().pipe(
+      map(posts => [...new Set(posts.map(post => post.category).filter(cat => cat))].sort())
+    );
+  }
+
+  /** Public API rows are snake_case; components expect camelCase. */
+  private toCamel(row: any): BlogPost {
+    const post: any = {};
+    for (const key in row) {
+      const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+      post[camelKey] = row[key];
+    }
+    return post as BlogPost;
   }
 }
