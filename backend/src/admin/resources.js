@@ -1,0 +1,252 @@
+/**
+ * The resource registry — the single declaration that drives the generic
+ * admin CRUD (list, get, create, update, delete, reorder). Adding a field is
+ * a one-line change here, not a new route module.
+ *
+ * Anything not declared is not writable: unknown body keys are dropped, not
+ * trusted. `id` handling comes from idType:
+ *   'uuid'   — server generates crypto.randomUUID() on create
+ *   'custom' — the client supplies the id (bundles "h1-biotin-starter",
+ *              blog posts "post_...", media "media_...")
+ *
+ * Field types: text, longtext, int, decimal, bool, json, timestamp.
+ * `orderColumn` names the sort_order-style column; it is deliberately absent
+ * from every field list — position is set by appending on create and by the
+ * reorder endpoint, never by typing a number.
+ */
+const uuid = { idType: 'uuid' };
+const custom = { idType: 'custom' };
+
+export const RESOURCES = {
+  'bundles': {
+    table: 'bundles',
+    label: 'Bundles',
+    ...custom,
+    orderColumn: 'order_index',
+    defaultOrder: 'order_index ASC',
+    jsonFields: ['services_list', 'gallery'],
+    fields: [
+      { column: 'parent_category_id', type: 'text' },
+      { column: 'parent_category', type: 'text' },
+      { column: 'card_number', type: 'text' },
+      { column: 'card_title', type: 'text', required: true },
+      { column: 'card_image', type: 'text' },
+      { column: 'card_price', type: 'text' },
+      { column: 'card_ribbon', type: 'text' },
+      { column: 'is_active', type: 'bool' },
+      { column: 'show_in_grid', type: 'bool' },
+      { column: 'show_price', type: 'bool' },
+      { column: 'show_in_slider', type: 'bool' },
+      { column: 'use_luxury_modal', type: 'bool' },
+      { column: 'modal_title', type: 'text' },
+      { column: 'price_old', type: 'text' },
+      { column: 'price_new', type: 'text', required: true },
+      { column: 'price_save', type: 'text' },
+      { column: 'price_unit', type: 'text' },
+      { column: 'show_installment', type: 'bool' },
+      { column: 'installment_text', type: 'text' },
+      { column: 'services_list', type: 'json' },
+      { column: 'services_label', type: 'text' },
+      { column: 'duration', type: 'text' },
+      { column: 'visits', type: 'text' },
+      { column: 'channel', type: 'text' },
+      { column: 'why_box_text', type: 'longtext' },
+      { column: 'gallery', type: 'json' },
+      { column: 'slider_tag', type: 'text' },
+      { column: 'slider_title', type: 'text' },
+      { column: 'slider_bg_image', type: 'text' },
+      { column: 'slider_bg_color', type: 'text' },
+      { column: 'slider_cta_text', type: 'text' },
+      { column: 'slider_order', type: 'int' },
+      { column: 'catalogue_theme', type: 'text' },
+      { column: 'catalogue_badge', type: 'text' },
+    ],
+  },
+
+  'parent-bundles': {
+    table: 'parent_bundles',
+    label: 'Bundle categories',
+    ...uuid,
+    orderColumn: 'order_index',
+    defaultOrder: 'order_index ASC',
+    jsonFields: [],
+    fields: [
+      { column: 'name', type: 'text', required: true },
+      { column: 'slug', type: 'text', required: true, unique: true },
+      { column: 'description', type: 'longtext' },
+      { column: 'icon', type: 'text' },
+      { column: 'is_active', type: 'bool' },
+    ],
+  },
+
+  'doctors': {
+    table: 'doctors',
+    label: 'Doctors',
+    ...uuid,
+    orderColumn: 'order_index',
+    defaultOrder: 'order_index ASC',
+    jsonFields: [
+      'sub_specialties', 'qualifications', 'certificates', 'languages',
+      'services', 'branches', 'available_days', 'before_after_gallery',
+    ],
+    fields: [
+      { column: 'slug', type: 'text', unique: true },
+      { column: 'name', type: 'text', required: true },
+      { column: 'title', type: 'text' },
+      { column: 'specialization', type: 'text' },
+      { column: 'sub_specialties', type: 'json' },
+      { column: 'qualifications', type: 'json' },
+      { column: 'certificates', type: 'json' },
+      { column: 'experience', type: 'int' },
+      { column: 'languages', type: 'json' },
+      { column: 'services', type: 'json' },
+      { column: 'rating', type: 'decimal' },
+      { column: 'branches', type: 'json' },
+      { column: 'available_days', type: 'json' },
+      { column: 'gender', type: 'text' },
+      { column: 'profile_image', type: 'text' },
+      { column: 'before_after_gallery', type: 'json' },
+      { column: 'bio', type: 'longtext' },
+      { column: 'long_bio', type: 'longtext' },
+      { column: 'philosophy', type: 'longtext' },
+      { column: 'featured', type: 'bool' },
+      { column: 'is_active', type: 'bool' },
+      { column: 'meta_title', type: 'text' },
+      { column: 'meta_description', type: 'longtext' },
+      { column: 'meta_keywords', type: 'longtext' },
+      { column: 'instagram_url', type: 'text' },
+      { column: 'facebook_url', type: 'text' },
+      { column: 'linkedin_url', type: 'text' },
+    ],
+  },
+
+  'services': {
+    table: 'services',
+    label: 'Services',
+    ...uuid,
+    orderColumn: 'order_index',
+    defaultOrder: 'order_index ASC',
+    jsonFields: ['gallery', 'benefits', 'procedure_steps', 'faq', 'tags'],
+    fields: [
+      { column: 'slug', type: 'text', required: true, unique: true },
+      { column: 'name', type: 'text', required: true },
+      { column: 'subtitle', type: 'text' },
+      { column: 'description', type: 'longtext' },
+      { column: 'featured_image', type: 'text' },
+      { column: 'gallery', type: 'json' },
+      { column: 'duration', type: 'text' },
+      { column: 'price', type: 'text' },
+      { column: 'price_unit', type: 'text' },
+      { column: 'benefits', type: 'json' },
+      { column: 'procedure_steps', type: 'json' },
+      { column: 'faq', type: 'json' },
+      { column: 'category', type: 'text' },
+      { column: 'parent_service', type: 'text' },
+      { column: 'tags', type: 'json' },
+      { column: 'featured', type: 'bool' },
+      { column: 'is_active', type: 'bool' },
+      { column: 'meta_title', type: 'text' },
+      { column: 'meta_description', type: 'longtext' },
+      { column: 'meta_keywords', type: 'longtext' },
+    ],
+  },
+
+  'blog-posts': {
+    table: 'blog_posts',
+    label: 'Blog posts',
+    ...custom,
+    defaultOrder: 'created_at DESC',
+    jsonFields: ['tags', 'related_posts'],
+    fields: [
+      { column: 'slug', type: 'text', required: true, unique: true },
+      { column: 'title', type: 'text', required: true },
+      { column: 'subtitle', type: 'text' },
+      { column: 'excerpt', type: 'longtext' },
+      { column: 'content', type: 'longtext', required: true },
+      { column: 'featured_image', type: 'text' },
+      { column: 'author', type: 'text' },
+      { column: 'author_image', type: 'text' },
+      { column: 'category', type: 'text' },
+      { column: 'tags', type: 'json' },
+      { column: 'status', type: 'text' },
+      { column: 'publish_date', type: 'timestamp' },
+      { column: 'read_time', type: 'text' },
+      { column: 'related_posts', type: 'json' },
+      { column: 'meta_title', type: 'text' },
+      { column: 'meta_description', type: 'longtext' },
+      { column: 'meta_keywords', type: 'longtext' },
+    ],
+  },
+
+  'branches': {
+    table: 'branches',
+    label: 'Branches',
+    ...uuid,
+    orderColumn: 'order_index',
+    defaultOrder: 'order_index ASC',
+    jsonFields: [],
+    fields: [
+      { column: 'slug', type: 'text', required: true, unique: true },
+      { column: 'branch_name', type: 'text', required: true },
+      { column: 'city', type: 'text', required: true },
+      { column: 'address', type: 'longtext', required: true },
+      { column: 'phone', type: 'text' },
+      { column: 'email', type: 'text' },
+      { column: 'whatsapp', type: 'text' },
+      { column: 'hours_weekday', type: 'text' },
+      { column: 'hours_weekend', type: 'text' },
+      { column: 'latitude', type: 'decimal' },
+      { column: 'longitude', type: 'decimal' },
+      { column: 'show_in_map', type: 'bool' },
+      { column: 'image', type: 'text' },
+      { column: 'is_active', type: 'bool' },
+    ],
+  },
+
+  'media': {
+    table: 'media_library',
+    label: 'Media library',
+    ...custom,
+    defaultOrder: 'uploaded_at DESC',
+    jsonFields: [],
+    fields: [
+      { column: 'filename', type: 'text', required: true },
+      { column: 'path', type: 'text' },
+      { column: 'full_path', type: 'text' },
+      { column: 'size', type: 'int' },
+      { column: 'type', type: 'text' },
+      { column: 'alt_text', type: 'text' },
+    ],
+  },
+
+  'contact-submissions': {
+    table: 'contact_submissions',
+    label: 'Contact submissions',
+    ...uuid,
+    defaultOrder: 'submitted_at DESC',
+    jsonFields: [],
+    // Admin edits are limited to triage fields; the submission itself is
+    // written only by the public endpoint.
+    fields: [
+      { column: 'status', type: 'text' },
+      { column: 'notes', type: 'longtext' },
+    ],
+  },
+
+  'settings': {
+    table: 'settings',
+    label: 'Settings',
+    ...uuid,
+    defaultOrder: '`key` ASC',
+    jsonFields: ['value'],
+    fields: [
+      { column: 'key', type: 'text', required: true, unique: true },
+      { column: 'value', type: 'json', required: true },
+      { column: 'description', type: 'longtext' },
+    ],
+  },
+};
+
+export function getResource(name) {
+  return Object.hasOwn(RESOURCES, name) ? RESOURCES[name] : null;
+}
