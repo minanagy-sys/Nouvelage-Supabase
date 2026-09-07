@@ -1,0 +1,10 @@
+{
+  "/our-story": {
+    "target": "http://127.0.0.1:4200",
+    "pathRewrite": { "^/our-story$": "/Nouvelage-Story.html" }
+  },
+  "/company-profile": {
+    "target": "http://127.0.0.1:4200",
+    "pathRewrite": { "^/company-profile$": "/company-profile.html" }
+  }
+}

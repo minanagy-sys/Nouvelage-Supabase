@@ -41,6 +41,17 @@ export function app(): express.Express {
     }),
   );
 
+  // Standalone (non-Angular) pages served at clean URLs without .html.
+  const STANDALONE_PAGES: Record<string, string> = {
+    '/our-story': 'Nouvelage-Story.html',
+    '/company-profile': 'company-profile.html',
+  };
+  for (const [route, file] of Object.entries(STANDALONE_PAGES)) {
+    server.get(route, (req, res) => {
+      res.sendFile(join(browserDistFolder, file));
+    });
+  }
+
   // Admin area: plain client-side rendering behind the login.
   server.get(['/admin', '/admin/*'], (req, res) => {
     res.sendFile(csrIndex);

@@ -30,6 +30,10 @@ server {
         try_files $uri @ssr;
     }
 
+    # Standalone (non-Angular) pages at clean URLs
+    location = /our-story        { rewrite ^ /Nouvelage-Story.html break; }
+    location = /company-profile  { rewrite ^ /company-profile.html break; }
+
     # API
     location /api/ {
         proxy_pass http://127.0.0.1:4000;
