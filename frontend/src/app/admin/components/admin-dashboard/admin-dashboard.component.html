@@ -131,7 +131,7 @@
             <span *ngIf="!isSidebarCollapsed">Parent Services</span>
           </button>
         </div>
-        <button class="nav-item" [class.active]="activeTab === 'bundles-management'" (click)="toggleBundlesMenu()">
+        <button class="nav-item" [class.active]="activeTab === 'bundles-management' || activeTab === 'parent-bundles' || activeTab === 'bundles-page'" (click)="toggleBundlesMenu()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
             <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -156,6 +156,13 @@
               <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path>
             </svg>
             <span *ngIf="!isSidebarCollapsed">Bundle Categories</span>
+          </button>
+          <button class="nav-item sub-item" [class.active]="activeTab === 'bundles-page'" (click)="setActiveTab('bundles-page')" style="padding-left: 3rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span *ngIf="!isSidebarCollapsed">Bundles Page Content</span>
           </button>
         </div>
         <button class="nav-item" [class.active]="activeTab === 'doctors'" (click)="setActiveTab('doctors')">
@@ -218,6 +225,7 @@
         <span *ngIf="activeTab === 'team-page'">Team Page Content</span>
         <span *ngIf="activeTab === 'blog-page'">Blog Page Content</span>
         <span *ngIf="activeTab === 'contact-page'">Contact Page Content</span>
+        <span *ngIf="activeTab === 'bundles-page'">Bundles Page Content</span>
         <span *ngIf="activeTab === 'services'">Services Management</span>
         <span *ngIf="activeTab === 'blog'">Blog Posts Management</span>
         <span *ngIf="activeTab === 'doctors'">
@@ -674,6 +682,11 @@
                 <label>Lead Text</label>
                 <textarea [(ngModel)]="pageContent.approach_lead" name="approach_lead" rows="3"></textarea>
               </div>
+              <div class="form-group">
+                <label>Card Link Text</label>
+                <input type="text" [(ngModel)]="pageContent.approach_link_text" name="approach_link_text" placeholder="Explore">
+                <small class="field-hint">Link text on every approach card (arrow is added automatically)</small>
+              </div>
 
               <!-- Approach Cards -->
               <div class="form-group full-width">
@@ -736,6 +749,11 @@
               <div class="form-group">
                 <label>Title (Emphasized)</label>
                 <input type="text" [(ngModel)]="pageContent.expertise_title_em" name="expertise_title_em">
+              </div>
+              <div class="form-group">
+                <label>Title Suffix (after emphasized)</label>
+                <input type="text" [(ngModel)]="pageContent.expertise_title_suffix" name="expertise_title_suffix" placeholder="Treatments">
+                <small class="field-hint">Text after the gold emphasized part of the heading</small>
               </div>
               <div class="form-group full-width">
                 <label>Lead Text</label>
@@ -1353,6 +1371,41 @@
                 <input type="text" [(ngModel)]="pageContent.contact_hours" name="contact_hours" placeholder="Sat–Fri · 10am–10pm">
                 <small class="field-hint">Operating hours</small>
               </div>
+              <div class="form-group">
+                <label>Instagram Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram_label" name="contact_instagram_label" placeholder="Instagram">
+                <small class="field-hint">Label for Instagram row</small>
+              </div>
+              <div class="form-group">
+                <label>Instagram Handle</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram" name="contact_instagram" placeholder="@nouvelageclinics">
+                <small class="field-hint">Instagram handle shown in the contact rows</small>
+              </div>
+              <div class="form-group">
+                <label>Branches Box Title (Part 01)</label>
+                <input type="text" [(ngModel)]="pageContent.contact_branches_title" name="contact_branches_title" placeholder="All Our Branches">
+                <small class="field-hint">Title of the branches box in the contact section</small>
+              </div>
+              <div class="form-group">
+                <label>Branches Box Locations</label>
+                <input type="text" [(ngModel)]="pageContent.contact_locations" name="contact_locations" placeholder="Cairo · Giza · Alexandria">
+                <small class="field-hint">Locations line under the branches box title</small>
+              </div>
+              <div class="form-group">
+                <label>Booking Box Title (Part 02)</label>
+                <input type="text" [(ngModel)]="pageContent.contact_book_title" name="contact_book_title" placeholder="Book or Ask a Question">
+                <small class="field-hint">Title of the booking / question box</small>
+              </div>
+              <div class="form-group">
+                <label>Booking Box Note</label>
+                <input type="text" [(ngModel)]="pageContent.contact_book_note" name="contact_book_note" placeholder="We reply within 2 hours">
+                <small class="field-hint">Reply-time note in the booking box</small>
+              </div>
+              <div class="form-group">
+                <label>Floating Book Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.float_book_text" name="float_book_text" placeholder="Book">
+                <small class="field-hint">Text of the floating book button in the corner of the page</small>
+              </div>
             </div>
           </div>
 
@@ -1535,6 +1588,11 @@
               <div class="form-group full-width">
                 <label>Lead Text</label>
                 <textarea [(ngModel)]="pageContent.approach_lead" name="approach_lead" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Card Link Text</label>
+                <input type="text" [(ngModel)]="pageContent.approach_link_text" name="approach_link_text" placeholder="Explore">
+                <small class="field-hint">Link text on every approach card (arrow is added automatically)</small>
               </div>
 
               <!-- Approach Cards -->
@@ -2215,6 +2273,41 @@
                 <input type="text" [(ngModel)]="pageContent.contact_hours" name="contact_hours" placeholder="Sat–Fri · 10am–10pm">
                 <small class="field-hint">Operating hours</small>
               </div>
+              <div class="form-group">
+                <label>Instagram Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram_label" name="contact_instagram_label" placeholder="Instagram">
+                <small class="field-hint">Label for Instagram row</small>
+              </div>
+              <div class="form-group">
+                <label>Instagram Handle</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram" name="contact_instagram" placeholder="@nouvelageclinics">
+                <small class="field-hint">Instagram handle shown in the contact rows</small>
+              </div>
+              <div class="form-group">
+                <label>Branches Box Title (Part 01)</label>
+                <input type="text" [(ngModel)]="pageContent.contact_branches_title" name="contact_branches_title" placeholder="All Our Branches">
+                <small class="field-hint">Title of the branches box in the contact section</small>
+              </div>
+              <div class="form-group">
+                <label>Branches Box Locations</label>
+                <input type="text" [(ngModel)]="pageContent.contact_locations" name="contact_locations" placeholder="Cairo · Giza · Alexandria">
+                <small class="field-hint">Locations line under the branches box title</small>
+              </div>
+              <div class="form-group">
+                <label>Booking Box Title (Part 02)</label>
+                <input type="text" [(ngModel)]="pageContent.contact_book_title" name="contact_book_title" placeholder="Book or Ask a Question">
+                <small class="field-hint">Title of the booking / question box</small>
+              </div>
+              <div class="form-group">
+                <label>Booking Box Note</label>
+                <input type="text" [(ngModel)]="pageContent.contact_book_note" name="contact_book_note" placeholder="We reply within 2 hours">
+                <small class="field-hint">Reply-time note in the booking box</small>
+              </div>
+              <div class="form-group">
+                <label>Floating Book Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.float_book_text" name="float_book_text" placeholder="Book">
+                <small class="field-hint">Text of the floating book button in the corner of the page</small>
+              </div>
             </div>
           </div>
 
@@ -2361,6 +2454,142 @@
                 </div>
               </div>
               <small class="field-hint">Check the doctors you want to display on the team page. Order will match the order shown above.</small>
+            </div>
+          </div>
+
+          <!-- Doctor Card Labels -->
+          <div class="form-section">
+            <h3 class="section-title">Doctor Card Labels</h3>
+            <p class="section-description">Small labels and buttons on every doctor card</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Years Label</label>
+                <input type="text" [(ngModel)]="pageContent.doctors_years_label" name="doctors_years_label" placeholder="YEARS EXP.">
+                <small class="field-hint">Label under the experience number</small>
+              </div>
+              <div class="form-group">
+                <label>Rating Label</label>
+                <input type="text" [(ngModel)]="pageContent.doctors_rating_label" name="doctors_rating_label" placeholder="RATING">
+                <small class="field-hint">Label under the rating stars</small>
+              </div>
+              <div class="form-group">
+                <label>Book Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.doctors_book_text" name="doctors_book_text" placeholder="BOOK WITH">
+                <small class="field-hint">Button prefix — the doctor's name is appended automatically</small>
+              </div>
+              <div class="form-group">
+                <label>Show More Text</label>
+                <input type="text" [(ngModel)]="pageContent.doctors_show_more_text" name="doctors_show_more_text" placeholder="See More Doctors">
+                <small class="field-hint">Toggle text when more doctors are hidden</small>
+              </div>
+              <div class="form-group">
+                <label>Show Less Text</label>
+                <input type="text" [(ngModel)]="pageContent.doctors_show_less_text" name="doctors_show_less_text" placeholder="Show Less">
+                <small class="field-hint">Toggle text when all doctors are shown</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Get in Touch Section -->
+          <div class="form-section">
+            <h3 class="section-title">Get in Touch Section (gt)</h3>
+            <p class="section-description">Header content above the contact form at the bottom of the team page</p>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Eyebrow Text (gt-eyebrow)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_eyebrow" name="gt_eyebrow" placeholder="Reach Out">
+                <small class="field-hint">Small text above the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Heading (h2)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_title" name="gt_title" placeholder="Get in">
+                <small class="field-hint">First part of the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Heading Emphasized (gt-em)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_title_em" name="gt_title_em" placeholder="Touch">
+                <small class="field-hint">Emphasized part in gold color</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Lead Text (gt-lead)</label>
+                <textarea [(ngModel)]="pageContent.gt_lead" name="gt_lead" rows="2" placeholder="Visit a branch, call our hotline, or send a message — our specialists are ready to begin your journey."></textarea>
+                <small class="field-hint">Intro paragraph below the title</small>
+              </div>
+              <div class="form-group">
+                <label>Slogan (gt-slogan)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_slogan" name="gt_slogan" placeholder="Nouvel Âge, Nouvelle Vie">
+                <small class="field-hint">Main slogan text</small>
+              </div>
+              <div class="form-group">
+                <label>Slogan Tagline (gt-slogan span)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_slogan_tagline" name="gt_slogan_tagline" placeholder="Younger for Longer">
+                <small class="field-hint">Smaller tagline below main slogan</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Rows -->
+          <div class="form-section">
+            <h3 class="section-title">Contact Rows</h3>
+            <p class="section-description">Labels and values of the contact rows next to the form</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Hotline Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_hotline_label" name="contact_hotline_label" placeholder="Hotline">
+              </div>
+              <div class="form-group">
+                <label>Hotline Number</label>
+                <input type="text" [(ngModel)]="pageContent.contact_hotline" name="contact_hotline" placeholder="16823">
+              </div>
+              <div class="form-group">
+                <label>WhatsApp Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_whatsapp_label" name="contact_whatsapp_label" placeholder="WhatsApp">
+              </div>
+              <div class="form-group">
+                <label>WhatsApp Number</label>
+                <input type="text" [(ngModel)]="pageContent.contact_whatsapp" name="contact_whatsapp" placeholder="+20 100 031 2528">
+              </div>
+              <div class="form-group">
+                <label>Email Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_email_label" name="contact_email_label" placeholder="Email">
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="text" [(ngModel)]="pageContent.contact_email" name="contact_email" placeholder="info@nouvelageclinic.com">
+              </div>
+              <div class="form-group">
+                <label>Instagram Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram_label" name="contact_instagram_label" placeholder="Instagram">
+              </div>
+              <div class="form-group">
+                <label>Instagram Handle</label>
+                <input type="text" [(ngModel)]="pageContent.contact_instagram_handle" name="contact_instagram_handle" placeholder="@nouvelageclinics">
+              </div>
+              <div class="form-group">
+                <label>Network Label</label>
+                <input type="text" [(ngModel)]="pageContent.contact_network_label" name="contact_network_label" placeholder="Network">
+              </div>
+              <div class="form-group">
+                <label>Network Text</label>
+                <input type="text" [(ngModel)]="pageContent.contact_network" name="contact_network" placeholder="Cairo · Giza · Alexandria — 10+ branches">
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Form Texts -->
+          <div class="form-section">
+            <h3 class="section-title">Contact Form Texts</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Submit Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.form_submit_text" name="form_submit_text" placeholder="Send Message">
+                <small class="field-hint">Text displayed on the submit button</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Success Message</label>
+                <textarea [(ngModel)]="pageContent.form_success_message" name="form_success_message" rows="2" placeholder="Opening WhatsApp with your message — we'll reply within 2 hours."></textarea>
+                <small class="field-hint">Message shown after successful form submission</small>
+              </div>
             </div>
           </div>
 
@@ -2998,6 +3227,120 @@
         </form>
       </div>
 
+      <!-- ========== BUNDLES PAGE BACKEND ========== -->
+      <div *ngIf="activeTab === 'bundles-page' && !isLoading" class="content-editor">
+        <form class="edit-form">
+          <!-- Page Header Section -->
+          <div class="form-section">
+            <h3 class="section-title">Page Header (phead)</h3>
+            <p class="section-description">Main header content at the top of the bundles page</p>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Eyebrow Text</label>
+                <input type="text" [(ngModel)]="pageContent.eyebrow" name="eyebrow" placeholder="Treatment Packages">
+                <small class="field-hint">&lt;span class="eyebrow"&gt;</small>
+              </div>
+              <div class="form-group">
+                <label>Main Title (h1)</label>
+                <input type="text" [(ngModel)]="pageContent.phead_h1" name="phead_h1" placeholder="Premium">
+                <small class="field-hint">First part of the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Title Emphasized (span.em)</label>
+                <input type="text" [(ngModel)]="pageContent.phead_em" name="phead_em" placeholder="Bundles">
+                <small class="field-hint">Emphasized part in gold color</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Lead Text (p.lead)</label>
+                <textarea [(ngModel)]="pageContent.lead" name="lead" rows="3" placeholder="Multi-session packages designed for optimal results. Combine treatments for enhanced effectiveness and better value."></textarea>
+                <small class="field-hint">Intro paragraph below the title</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA2 Section -->
+          <div class="form-section">
+            <h3 class="section-title">CTA Section (svc-cta2)</h3>
+            <p class="section-description">Call-to-action box that appears after the bundles grid</p>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Eyebrow Text</label>
+                <input type="text" [(ngModel)]="pageContent.cta2_eyebrow" name="cta2_eyebrow" placeholder="Your Journey">
+                <small class="field-hint">&lt;span class="eyebrow"&gt;</small>
+              </div>
+              <div class="form-group">
+                <label>Heading (h2)</label>
+                <input type="text" [(ngModel)]="pageContent.cta2_title" name="cta2_title" placeholder="Begin with a">
+                <small class="field-hint">First part of the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Heading Emphasized (span.em)</label>
+                <input type="text" [(ngModel)]="pageContent.cta2_title_em" name="cta2_title_em" placeholder="complimentary consultation">
+                <small class="field-hint">Emphasized part in gold color</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Description Paragraph</label>
+                <textarea [(ngModel)]="pageContent.cta2_description" name="cta2_description" rows="2" placeholder="Tell us your goals — together we'll plan a treatment journey that suits you."></textarea>
+                <small class="field-hint">Intro paragraph below the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.cta2_button_text" name="cta2_button_text" placeholder="Book Consultation →">
+                <small class="field-hint">CTA button label</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- GT Contact Section -->
+          <div class="form-section">
+            <h3 class="section-title">Contact Form Section (gt)</h3>
+            <p class="section-description">Header content above the contact form and branch information</p>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Eyebrow Text (gt-eyebrow)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_eyebrow" name="gt_eyebrow" placeholder="Reach Out">
+                <small class="field-hint">&lt;span class="gt-eyebrow"&gt;</small>
+              </div>
+              <div class="form-group">
+                <label>Heading (h2)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_title" name="gt_title" placeholder="Get in">
+                <small class="field-hint">First part of the heading</small>
+              </div>
+              <div class="form-group">
+                <label>Heading Emphasized (gt-em)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_title_em" name="gt_title_em" placeholder="Touch">
+                <small class="field-hint">Emphasized part in gold color</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Lead Text (gt-lead)</label>
+                <textarea [(ngModel)]="pageContent.gt_lead" name="gt_lead" rows="2" placeholder="Visit a branch, call our hotline, or send a message — our specialists are ready to begin your journey."></textarea>
+                <small class="field-hint">Intro paragraph below the title</small>
+              </div>
+              <div class="form-group">
+                <label>Slogan (gt-slogan)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_slogan" name="gt_slogan" placeholder="Nouvel Âge, Nouvelle Vie">
+                <small class="field-hint">Main slogan text</small>
+              </div>
+              <div class="form-group">
+                <label>Slogan Tagline (gt-slogan span)</label>
+                <input type="text" [(ngModel)]="pageContent.gt_slogan_tagline" name="gt_slogan_tagline" placeholder="Younger for Longer">
+                <small class="field-hint">Smaller tagline below main slogan</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-save" (click)="savePageContent()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              </svg>
+              Save Changes
+            </button>
+            <p *ngIf="saveMessage" class="save-message" [textContent]="saveMessage"></p>
+          </div>
+        </form>
+      </div>
+
       <!-- ========== CONTACT PAGE BACKEND ========== -->
       <div *ngIf="activeTab === 'contact-page' && !isLoading" class="content-editor">
         <form class="edit-form">
@@ -3183,6 +3526,56 @@
             </div>
           </div>
 
+          <!-- Branch Card Labels & Buttons -->
+          <div class="form-section">
+            <h3 class="section-title">Branch Card Labels &amp; Buttons</h3>
+            <p class="section-description">Fixed labels, status texts and buttons shown on every branch card</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Clinic Name</label>
+                <input type="text" [(ngModel)]="pageContent.branches_clinic_name" name="branches_clinic_name" placeholder="Nouvel Age Aesthetic Clinic">
+                <small class="field-hint">Clinic name shown on the branch card</small>
+              </div>
+              <div class="form-group">
+                <label>Phone Row Label</label>
+                <input type="text" [(ngModel)]="pageContent.branches_phone_label" name="branches_phone_label" placeholder="Phone">
+              </div>
+              <div class="form-group">
+                <label>Email Row Label</label>
+                <input type="text" [(ngModel)]="pageContent.branches_email_label" name="branches_email_label" placeholder="Email">
+              </div>
+              <div class="form-group">
+                <label>Weekday Hours Label</label>
+                <input type="text" [(ngModel)]="pageContent.branches_hours_weekday_label" name="branches_hours_weekday_label" placeholder="Hours (Weekday)">
+              </div>
+              <div class="form-group">
+                <label>Weekend Hours Label</label>
+                <input type="text" [(ngModel)]="pageContent.branches_hours_weekend_label" name="branches_hours_weekend_label" placeholder="Hours (Weekend)">
+              </div>
+              <div class="form-group">
+                <label>Status Row Label</label>
+                <input type="text" [(ngModel)]="pageContent.branches_status_label" name="branches_status_label" placeholder="Status">
+              </div>
+              <div class="form-group">
+                <label>Open Status Text</label>
+                <input type="text" [(ngModel)]="pageContent.branches_open_text" name="branches_open_text" placeholder="Open Now">
+              </div>
+              <div class="form-group">
+                <label>Closed Status Text</label>
+                <input type="text" [(ngModel)]="pageContent.branches_closed_text" name="branches_closed_text" placeholder="Closed · Opens 10am">
+              </div>
+              <div class="form-group">
+                <label>Maps Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.branches_maps_button_text" name="branches_maps_button_text" placeholder="View on Maps">
+                <small class="field-hint">The arrow after the text is added automatically</small>
+              </div>
+              <div class="form-group">
+                <label>WhatsApp Button Text</label>
+                <input type="text" [(ngModel)]="pageContent.branches_whatsapp_button_text" name="branches_whatsapp_button_text" placeholder="WhatsApp">
+              </div>
+            </div>
+          </div>
+
           <!-- Contact Details - Ready to Begin Your Transformation? -->
           <div class="form-section">
             <h3 class="section-title">Contact Details - Ready to Begin Your Transformation?</h3>
@@ -3356,6 +3749,23 @@
               <div class="form-group full-width">
                 <label>Subtitle</label>
                 <textarea [(ngModel)]="pageContent.hero_subtitle" name="hero_subtitle" rows="2" placeholder="Expert advice, latest trends, and success stories from our clinic"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Post List Texts -->
+          <div class="form-section">
+            <h3 class="section-title">Post List Texts</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Read More Link Text</label>
+                <input type="text" [(ngModel)]="pageContent.read_more_text" name="read_more_text" placeholder="Read More →">
+                <small class="field-hint">Link text on every post card</small>
+              </div>
+              <div class="form-group full-width">
+                <label>Empty State Message</label>
+                <input type="text" [(ngModel)]="pageContent.empty_state_text" name="empty_state_text" placeholder="Blog posts will be added soon.">
+                <small class="field-hint">Message shown when no posts are published yet</small>
               </div>
             </div>
           </div>

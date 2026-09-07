@@ -64,8 +64,10 @@ export class BlogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Load page content from backend
-    this.pageContent = this.demoModeService.getDemoPageContent('blog-page');
+    // Load page content from the database, falling back to the local defaults
+    this.supabaseService.getPageContent('blog-page').subscribe(content => {
+      this.pageContent = content || this.demoModeService.getDemoPageContent('blog-page');
+    });
 
     // Migrate hardcoded posts to BlogService if needed (one-time migration)
     this.migrateHardcodedPosts();

@@ -299,9 +299,9 @@ h1,h2,h3,h4{ font-family:var(--display); font-weight:400; line-height:1.05; colo
 <!-- Page Header -->
 <header class="phead">
   <a class="back" (click)="navigateTo('/')">← Back to home</a>
-  <span class="eyebrow" style="margin-top:1.4rem">Treatment Packages</span>
-  <h1>Premium <span class="em">Bundles</span></h1>
-  <p class="lead">Multi-session packages designed for optimal results. Combine treatments for enhanced effectiveness and better value.</p>
+  <span class="eyebrow" style="margin-top:1.4rem">{{ pageContent.eyebrow || 'Treatment Packages' }}</span>
+  <h1>{{ pageContent.phead_h1 || 'Premium' }} <span class="em">{{ pageContent.phead_em || 'Bundles' }}</span></h1>
+  <p class="lead">{{ pageContent.lead || 'Multi-session packages designed for optimal results. Combine treatments for enhanced effectiveness and better value.' }}</p>
 </header>
 
 <!-- Bundles Grid Section -->
@@ -351,10 +351,10 @@ h1,h2,h3,h4{ font-family:var(--display); font-weight:400; line-height:1.05; colo
 
     <!-- CTA Section -->
     <div class="svc-cta2 reveal">
-      <span class="eyebrow" style="justify-content:center">Your Journey</span>
-      <h2 style="margin-top:1rem">Begin with a <span class="em">complimentary consultation</span></h2>
-      <p>Tell us your goals — together we'll plan a treatment journey that suits you.</p>
-      <a class="btn" href="#contact">Book Consultation →</a>
+      <span class="eyebrow" style="justify-content:center">{{ pageContent.cta2_eyebrow || 'Your Journey' }}</span>
+      <h2 style="margin-top:1rem">{{ pageContent.cta2_title || 'Begin with a' }} <span class="em">{{ pageContent.cta2_title_em || 'complimentary consultation' }}</span></h2>
+      <p>{{ pageContent.cta2_description || 'Tell us your goals — together we\'ll plan a treatment journey that suits you.' }}</p>
+      <a class="btn" href="#contact">{{ pageContent.cta2_button_text || 'Book Consultation →' }}</a>
     </div>
   </div>
 </section>
@@ -363,10 +363,10 @@ h1,h2,h3,h4{ font-family:var(--display); font-weight:400; line-height:1.05; colo
 <section class="gt" id="contact">
   <div class="gt-in">
     <div class="gt-head">
-      <span class="gt-eyebrow">Reach Out</span>
-      <h2>Get in <span class="gt-em">Touch</span></h2>
-      <p class="gt-lead">Visit a branch, call our hotline, or send a message — our specialists are ready to begin your journey.</p>
-      <p class="gt-slogan">Nouvel Âge, Nouvelle Vie <span>Younger for Longer</span></p>
+      <span class="gt-eyebrow">{{ pageContent.gt_eyebrow || 'Reach Out' }}</span>
+      <h2>{{ pageContent.gt_title || 'Get in' }} <span class="gt-em">{{ pageContent.gt_title_em || 'Touch' }}</span></h2>
+      <p class="gt-lead">{{ pageContent.gt_lead || 'Visit a branch, call our hotline, or send a message — our specialists are ready to begin your journey.' }}</p>
+      <p class="gt-slogan">{{ pageContent.gt_slogan || 'Nouvel Âge, Nouvelle Vie' }} <span>{{ pageContent.gt_slogan_tagline || 'Younger for Longer' }}</span></p>
     </div>
     <div class="gt-grid">
       <div class="gt-direct">

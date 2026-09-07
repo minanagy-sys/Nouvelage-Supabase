@@ -56,12 +56,12 @@
       <div class="blog-date">{{post.date}}</div>
       <h3>{{post.title}}</h3>
       <p class="blog-excerpt">{{post.excerpt}}</p>
-      <span class="blog-read">Read More →</span>
+      <span class="blog-read">{{ pageContent.read_more_text || 'Read More →' }}</span>
     </div>
   </a>
 
   <p *ngIf="blogPosts.length === 0" style="grid-column:1/-1;text-align:center;color:var(--muted);padding:4rem;">
-    Blog posts will be added soon.
+    {{ pageContent.empty_state_text || 'Blog posts will be added soon.' }}
   </p>
 </div>
 

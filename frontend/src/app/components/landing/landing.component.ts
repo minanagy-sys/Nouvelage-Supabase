@@ -2,12 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
-import { environment } from '../../../environments/environment';
+import { ContentService } from '../../shared/services/content.service';
 
 @Component({
   selector: 'app-landing',
@@ -46,8 +45,8 @@ export class LandingComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private http: HttpClient,
     private demoModeService: DemoModeService,
+    private supabaseService: ContentService,
     private title: Title,
     private meta: Meta
   ) {}
@@ -71,77 +70,42 @@ export class LandingComponent implements OnInit {
   }
 
   loadPageContent(): void {
-    // Use demo mode service to get content (works with localStorage)
-    if (this.demoModeService.isDemoModeEnabled()) {
-      const content = this.demoModeService.getDemoPageContent('landing');
+    // Content lives in the database — read it through the API (SSR-safe via
+    // API_BASE) and fall back to the built-in defaults when no row exists.
+    this.supabaseService.getPageContent('landing').subscribe(content => {
+      this.applyContent(content || this.demoModeService.getDemoPageContent('landing'));
+    });
+  }
 
-      // Brand Header Logo
-      this.logoUrl = content.logo_url || this.logoUrl;
-      this.logoAlt = content.logo_alt || this.logoAlt;
+  private applyContent(content: any): void {
+    if (!content) return;
 
-      // For Her Panel
-      this.forherBgImage = content.forher_bg_image || this.forherBgImage;
-      this.forherEyebrow = content.forher_eyebrow || this.forherEyebrow;
-      this.forherWelcome = content.forher_welcome || this.forherWelcome;
-      this.forherSubtitle = content.forher_subtitle || this.forherSubtitle;
-      this.forherCtaText = content.forher_cta_text || this.forherCtaText;
-      this.forherCtaLink = content.forher_cta_link || this.forherCtaLink;
+    // Brand Header Logo
+    this.logoUrl = content.logo_url || this.logoUrl;
+    this.logoAlt = content.logo_alt || this.logoAlt;
 
-      // For Him Panel
-      this.forhimBgImage = content.forhim_bg_image || this.forhimBgImage;
-      this.forhimEyebrow = content.forhim_eyebrow || this.forhimEyebrow;
-      this.forhimWelcome = content.forhim_welcome || this.forhimWelcome;
-      this.forhimSubtitle = content.forhim_subtitle || this.forhimSubtitle;
-      this.forhimCtaText = content.forhim_cta_text || this.forhimCtaText;
-      this.forhimCtaLink = content.forhim_cta_link || this.forhimCtaLink;
+    // For Her Panel
+    this.forherBgImage = content.forher_bg_image || this.forherBgImage;
+    this.forherEyebrow = content.forher_eyebrow || this.forherEyebrow;
+    this.forherWelcome = content.forher_welcome || this.forherWelcome;
+    this.forherSubtitle = content.forher_subtitle || this.forherSubtitle;
+    this.forherCtaText = content.forher_cta_text || this.forherCtaText;
+    this.forherCtaLink = content.forher_cta_link || this.forherCtaLink;
 
-      // Locations
-      this.locations = content.locations || this.locations;
+    // For Him Panel
+    this.forhimBgImage = content.forhim_bg_image || this.forhimBgImage;
+    this.forhimEyebrow = content.forhim_eyebrow || this.forhimEyebrow;
+    this.forhimWelcome = content.forhim_welcome || this.forhimWelcome;
+    this.forhimSubtitle = content.forhim_subtitle || this.forhimSubtitle;
+    this.forhimCtaText = content.forhim_cta_text || this.forhimCtaText;
+    this.forhimCtaLink = content.forhim_cta_link || this.forhimCtaLink;
 
-      // Display Settings
-      this.animationDuration = content.animation_duration || this.animationDuration;
-      this.overlayOpacity = content.overlay_opacity || this.overlayOpacity;
-    } else {
-      // Try to load content from backend API
-      this.http.get<any>(`${environment.apiUrl}/content/pages/landing`).subscribe({
-        next: (response) => {
-          if (response.content) {
-            const content = response.content;
+    // Locations
+    this.locations = content.locations || this.locations;
 
-            // Brand Header Logo
-            this.logoUrl = content.logo_url || this.logoUrl;
-            this.logoAlt = content.logo_alt || this.logoAlt;
-
-            // For Her Panel
-            this.forherBgImage = content.forher_bg_image || this.forherBgImage;
-            this.forherEyebrow = content.forher_eyebrow || this.forherEyebrow;
-            this.forherWelcome = content.forher_welcome || this.forherWelcome;
-            this.forherSubtitle = content.forher_subtitle || this.forherSubtitle;
-            this.forherCtaText = content.forher_cta_text || this.forherCtaText;
-            this.forherCtaLink = content.forher_cta_link || this.forherCtaLink;
-
-            // For Him Panel
-            this.forhimBgImage = content.forhim_bg_image || this.forhimBgImage;
-            this.forhimEyebrow = content.forhim_eyebrow || this.forhimEyebrow;
-            this.forhimWelcome = content.forhim_welcome || this.forhimWelcome;
-            this.forhimSubtitle = content.forhim_subtitle || this.forhimSubtitle;
-            this.forhimCtaText = content.forhim_cta_text || this.forhimCtaText;
-            this.forhimCtaLink = content.forhim_cta_link || this.forhimCtaLink;
-
-            // Locations
-            this.locations = content.locations || this.locations;
-
-            // Display Settings
-            this.animationDuration = content.animation_duration || this.animationDuration;
-            this.overlayOpacity = content.overlay_opacity || this.overlayOpacity;
-          }
-        },
-        error: (error) => {
-          // If API call fails, use default values (already set)
-          console.log('Using default landing page content');
-        }
-      });
-    }
+    // Display Settings
+    this.animationDuration = content.animation_duration || this.animationDuration;
+    this.overlayOpacity = content.overlay_opacity || this.overlayOpacity;
   }
 
   navigateToHer(): void {

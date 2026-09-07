@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
+import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
 
@@ -68,16 +69,29 @@ export class ContactComponent implements OnInit, AfterViewInit {
     message: ''
   };
 
+  private mapInitialized = false;
+
   constructor(
     private router: Router,
     private demoModeService: DemoModeService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService,
     private googleSheetsService: GoogleSheetsService
   ) {}
 
   ngOnInit(): void {
-    // Load contact page data from backend
+    // Local defaults render immediately; the database row replaces them as
+    // soon as the API answers, so dashboard edits reach the public page.
     this.pageContent = this.demoModeService.getDemoPageContent('contact-page');
+    this.supabaseService.getPageContent('contact-page').subscribe(content => {
+      if (content) {
+        if (!Array.isArray(content.branches) || content.branches.length === 0) {
+          content.branches = this.pageContent.branches;
+        }
+        this.pageContent = content;
+      }
+      this.scheduleMapInit();
+    });
 
     // Initialize reveal animations
     if (typeof window !== 'undefined') {
@@ -86,10 +100,17 @@ export class ContactComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Initialize map after view is ready
+    // The map normally initializes once the page content has resolved (see
+    // ngOnInit); this timer is a fallback in case the request never settles.
     if (typeof window !== 'undefined') {
-      setTimeout(() => this.initMap(), 500);
+      setTimeout(() => this.scheduleMapInit(), 2500);
     }
+  }
+
+  private scheduleMapInit(): void {
+    if (this.mapInitialized || typeof window === 'undefined') return;
+    this.mapInitialized = true;
+    setTimeout(() => this.initMap(), 500);
   }
 
   navigateTo(path: string): void {

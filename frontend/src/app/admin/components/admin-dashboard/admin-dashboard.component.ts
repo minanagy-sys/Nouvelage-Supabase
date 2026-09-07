@@ -17,7 +17,7 @@ import { ContentService } from '../../../shared/services/content.service';
 import { BookingsService, Booking } from '../../services/bookings.service';
 
 type TabType = 'overview' | 'landing' | 'forher' | 'forhim' | 'services-page' |
-               'hero-slider' | 'services-management' | 'parent-services' | 'bundles-management' | 'parent-bundles' |
+               'hero-slider' | 'services-management' | 'parent-services' | 'bundles-management' | 'parent-bundles' | 'bundles-page' |
                'services' | 'doctors' | 'team-page' | 'blog-page' | 'contact-page' |
                'bookings' | 'media' | 'blog';
 
@@ -290,6 +290,7 @@ export class AdminDashboardComponent implements OnInit {
       case 'services-page':
       case 'blog-page':
       case 'contact-page':
+      case 'bundles-page':
         this.loadPageContent(tab);
         break;
       case 'services':

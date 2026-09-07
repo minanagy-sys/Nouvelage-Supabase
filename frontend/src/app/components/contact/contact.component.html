@@ -66,17 +66,17 @@
       <div class="br-card" *ngIf="pageContent.branches[selectedBranchIndex]">
         <span class="br-eyebrow" id="brCity">{{ pageContent.branches[selectedBranchIndex].city }}</span>
         <h3 id="brName">{{ pageContent.branches[selectedBranchIndex].branch_name }}</h3>
-        <p class="br-addr"><span id="brAddr">{{ pageContent.branches[selectedBranchIndex].address }}</span><br>Nouvel Age Aesthetic Clinic</p>
+        <p class="br-addr"><span id="brAddr">{{ pageContent.branches[selectedBranchIndex].address }}</span><br>{{ pageContent.branches_clinic_name || "Nouvel Age Aesthetic Clinic" }}</p>
         <div class="br-rows">
-          <div class="br-row"><b>Phone</b><a [href]="'tel:' + pageContent.branches[selectedBranchIndex].phone">{{ pageContent.branches[selectedBranchIndex].phone }}</a></div>
-          <div class="br-row"><b>Email</b><a [href]="'mailto:' + pageContent.branches[selectedBranchIndex].email">{{ pageContent.branches[selectedBranchIndex].email }}</a></div>
-          <div class="br-row"><b>Hours (Weekday)</b><span>{{ pageContent.branches[selectedBranchIndex].hours_weekday }}</span></div>
-          <div class="br-row"><b>Hours (Weekend)</b><span>{{ pageContent.branches[selectedBranchIndex].hours_weekend }}</span></div>
-          <div class="br-row"><b>Status</b><span class="br-status" id="brStatus"><span class="br-dot" [class.is-closed]="!isOpen()"></span> {{ isOpen() ? 'Open Now' : 'Closed · Opens 10am' }}</span></div>
+          <div class="br-row"><b>{{ pageContent.branches_phone_label || "Phone" }}</b><a [href]="'tel:' + pageContent.branches[selectedBranchIndex].phone">{{ pageContent.branches[selectedBranchIndex].phone }}</a></div>
+          <div class="br-row"><b>{{ pageContent.branches_email_label || "Email" }}</b><a [href]="'mailto:' + pageContent.branches[selectedBranchIndex].email">{{ pageContent.branches[selectedBranchIndex].email }}</a></div>
+          <div class="br-row"><b>{{ pageContent.branches_hours_weekday_label || "Hours (Weekday)" }}</b><span>{{ pageContent.branches[selectedBranchIndex].hours_weekday }}</span></div>
+          <div class="br-row"><b>{{ pageContent.branches_hours_weekend_label || "Hours (Weekend)" }}</b><span>{{ pageContent.branches[selectedBranchIndex].hours_weekend }}</span></div>
+          <div class="br-row"><b>{{ pageContent.branches_status_label || "Status" }}</b><span class="br-status" id="brStatus"><span class="br-dot" [class.is-closed]="!isOpen()"></span> {{ isOpen() ? (pageContent.branches_open_text || 'Open Now') : (pageContent.branches_closed_text || 'Closed · Opens 10am') }}</span></div>
         </div>
         <div class="br-actions">
-          <a class="br-act br-act--maps" id="brMaps" [href]="getMapsUrl()" target="_blank" rel="noopener">View on Maps →</a>
-          <a class="br-act br-act--wa" [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="br-act br-act--maps" id="brMaps" [href]="getMapsUrl()" target="_blank" rel="noopener">{{ pageContent.branches_maps_button_text || "View on Maps" }} →</a>
+          <a class="br-act br-act--wa" [href]="whatsappUrl" target="_blank" rel="noopener">{{ pageContent.branches_whatsapp_button_text || "WhatsApp" }}</a>
         </div>
       </div>
     </div>

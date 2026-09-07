@@ -73,9 +73,9 @@
 <section class="section approach" data-screen-label="Approach">
   <div class="container">
     <div class="sec-head reveal">
-      <span class="eyebrow">Our Approach</span>
-      <h2 class="h-l" style="margin-top:1.4rem">Four Pillars of <span class="em" data-comment-anchor="568875e1a2-span">Considered Care</span></h2>
-      <p class="lead" style="margin-top:1.4rem">Face, hair, body and lasers — every discipline under one roof, each held to a single, uncompromising standard.</p>
+      <span class="eyebrow">{{pageContent.approach_eyebrow || 'Our Approach'}}</span>
+      <h2 class="h-l" style="margin-top:1.4rem">{{pageContent.approach_title || 'Four Pillars of'}} <span class="em" data-comment-anchor="568875e1a2-span">{{pageContent.approach_title_em || 'Considered Care'}}</span></h2>
+      <p class="lead" style="margin-top:1.4rem">{{pageContent.approach_lead || 'Face, hair, body and lasers — every discipline under one roof, each held to a single, uncompromising standard.'}}</p>
     </div>
     <div class="appr-grid">
       <a *ngFor="let card of pageContent.approach_grid" 
@@ -85,7 +85,7 @@
         <div class="in">
           <h3><span class="em">{{card.title}}</span></h3>
           <p>{{card.description}}</p>
-          <span class="x">Explore →</span>
+          <span class="x">{{pageContent.approach_link_text || 'Explore'}} →</span>
         </div>
       </a>
     </div>
@@ -96,9 +96,9 @@
 <section class="section expertise" id="services" data-screen-label="Expertise" style="padding: 52px clamp(1.2rem,5vw,74px) 30px">
   <div class="container">
     <div class="sec-head reveal" data-comment-anchor="58c0b79b0a-div">
-      <span class="eyebrow">Trending Now</span>
-      <h2 class="h-l" style="margin-top:1.4rem">Our Most <span class="em">Trending</span> Treatments</h2>
-      <p class="lead" style="margin-top:1.4rem">The latest in aesthetic science — the innovations our clients are asking for most this season, performed by certified specialists.</p>
+      <span class="eyebrow">{{pageContent.expertise_eyebrow || 'Trending Now'}}</span>
+      <h2 class="h-l" style="margin-top:1.4rem">{{pageContent.expertise_title || 'Our Most'}} <span class="em">{{pageContent.expertise_title_em || 'Trending'}}</span> {{pageContent.expertise_title_suffix || 'Treatments'}}</h2>
+      <p class="lead" style="margin-top:1.4rem">{{pageContent.expertise_lead || 'The latest in aesthetic science — the innovations our clients are asking for most this season, performed by certified specialists.'}}</p>
     </div>
     <div class="exp-grid">
       <a *ngFor="let card of pageContent.expertise_grid; let i = index"
@@ -127,9 +127,9 @@
 <section class="section why" data-screen-label="Why Nouvelage" style="padding: 20px clamp(1.2rem,5vw,74px) 93px">
   <div class="container" data-comment-anchor="21a1eb5da0-div">
     <div class="sec-head reveal">
-      <span class="eyebrow">The Nouvel Age Difference</span>
-      <h2 class="h-l" style="margin-top:1.4rem">Thirteen Years of <span class="em">Trusted Care</span></h2>
-      <p class="lead" style="margin-top:1.4rem">Since 2014, Nouvel Age has grown into one of Egypt's most trusted aesthetic groups — more than 188,000 patients cared for by a team of 150+ doctors, across Cairo, Giza and Alexandria.</p>
+      <span class="eyebrow">{{pageContent.why_eyebrow || 'The Nouvel Age Difference'}}</span>
+      <h2 class="h-l" style="margin-top:1.4rem">{{pageContent.why_title || 'Thirteen Years of'}} <span class="em">{{pageContent.why_title_em || 'Trusted Care'}}</span></h2>
+      <p class="lead" style="margin-top:1.4rem">{{pageContent.why_lead || "Since 2014, Nouvel Age has grown into one of Egypt's most trusted aesthetic groups — more than 188,000 patients cared for by a team of 150+ doctors, across Cairo, Giza and Alexandria."}}</p>
     </div>
         <div class="why-pillars">
       <div *ngFor="let pillar of pageContent.why_pillars; let i = index"
@@ -179,10 +179,10 @@
   <div class="container" data-comment-anchor="62cd36a826-div">
     <div class="docs-head reveal">
       <div class="sec-head" style="margin:0">
-      <span class="eyebrow">Our Medical Team</span>
-      <h2 class="h-l" style="margin-top:1.4rem">Expert Doctors. <span class="em">Genuine Care.</span></h2>
-      <p class="lead" style="margin-top:1.4rem">Every treatment is performed by board-certified specialists — never delegated.</p></div>
-      <a class="docs-allink" href="/team" aria-label="Show all doctors">Show all doctors</a>
+      <span class="eyebrow">{{pageContent.doctors_eyebrow || 'Our Medical Team'}}</span>
+      <h2 class="h-l" style="margin-top:1.4rem">{{pageContent.doctors_title || 'Expert Doctors.'}} <span class="em">{{pageContent.doctors_title_em || 'Genuine Care.'}}</span></h2>
+      <p class="lead" style="margin-top:1.4rem">{{pageContent.doctors_lead || 'Every treatment is performed by board-certified specialists — never delegated.'}}</p></div>
+      <a class="docs-allink" href="/team" aria-label="Show all doctors">{{pageContent.doctors_all_link_text || 'Show all doctors'}}</a>
     </div>
     <div class="doc-grid">
       <article class="doc-card reveal" *ngFor="let doctor of displayedDoctors" (click)="viewDoctor(doctor.id)">
@@ -318,7 +318,7 @@
       <p class="lead" style="margin-top:1.4rem">{{pageContent.contact_lead}}</p>    </div>
     <!-- PART 1 · ALL BRANCHES -->
     <div class="ct-part reveal">
-      <div class="ct-part-head"><span class="ct-num">01</span><h3>All Our Branches</h3><span class="ct-note">Cairo · Giza · Alexandria</span></div>
+      <div class="ct-part-head"><span class="ct-num">01</span><h3>{{pageContent.contact_branches_title || 'All Our Branches'}}</h3><span class="ct-note">{{pageContent.contact_locations || 'Cairo · Giza · Alexandria'}}</span></div>
       <div class="branch-map">
       <div id="nvMap" role="application" aria-label="Map of Nouvelage branches across Cairo, Giza and Alexandria"></div>
     </div>
@@ -326,13 +326,13 @@
 
     <!-- PART 2 · BOOK / ASK -->
     <div class="ct-part reveal">
-      <div class="ct-part-head"><span class="ct-num">02</span><h3>Book or Ask a Question</h3><span class="ct-note">We reply within 2 hours</span></div>
+      <div class="ct-part-head"><span class="ct-num">02</span><h3>{{pageContent.contact_book_title || 'Book or Ask a Question'}}</h3><span class="ct-note">{{pageContent.contact_book_note || 'We reply within 2 hours'}}</span></div>
     <div class="contact-grid">
       <div class="ct-direct">
         <div class="row"><span class="k">{{pageContent.contact_hotline_label || 'Hotline'}}</span><span class="v"><a [href]="'tel:' + (pageContent.contact_hotline || '16823')">{{pageContent.contact_hotline || '16823'}}</a></span></div>
         <div class="row"><span class="k">{{pageContent.contact_whatsapp_label || 'WhatsApp'}}</span><span class="v"><a class="wa-btn" [href]="getWhatsAppLink()" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.02zm-7.01 15.24h-.003a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.25 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/></svg>{{pageContent.contact_whatsapp || '+20 100 031 2528'}}</a></span></div>
         <div class="row"><span class="k">{{pageContent.contact_email_label || 'Email'}}</span><span class="v"><a [href]="'mailto:' + (pageContent.contact_email || 'info@nouvelageclinic.com')">{{pageContent.contact_email || 'info@nouvelageclinic.com'}}</a></span></div>
-        <div class="row"><span class="k">Instagram</span><span class="v"><a href="https://www.instagram.com/nouvelageclinics" target="_blank" rel="noopener">&#64;nouvelageclinics</a></span></div>
+        <div class="row"><span class="k">{{pageContent.contact_instagram_label || 'Instagram'}}</span><span class="v"><a href="https://www.instagram.com/nouvelageclinics" target="_blank" rel="noopener">{{pageContent.contact_instagram || '@nouvelageclinics'}}</a></span></div>
         <div class="row"><span class="k">{{pageContent.contact_hours_label || 'Opening Hours'}}</span><span class="v">{{pageContent.contact_hours || 'Sat – Fri · 10am–10pm'}}</span></div>
       </div>
       <form class="form reveal" id="ctForm" novalidate>
@@ -364,7 +364,7 @@
 <!-- floating actions -->
 <div class="float">
   <a class="wa" href="https://api.whatsapp.com/send?phone=201000312528&text=Hi+Nouvelage+%F0%9F%91%8B+I%27d+like+to+book+my+visit." aria-label="WhatsApp">✆</a>
-  <a class="bk" href="#contact" aria-label="Book">Book</a>
+  <a class="bk" href="#contact" aria-label="Book">{{pageContent.float_book_text || 'Book'}}</a>
 </div>
 
 <template id="__bundler_thumbnail" data-bg-color="#2A211B">
