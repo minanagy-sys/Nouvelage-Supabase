@@ -3,20 +3,17 @@ import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AdminAuthService } from '../services/admin-auth.service';
-import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class AdminAuthInterceptor implements HttpInterceptor {
-  constructor(
-    private adminAuthService: AdminAuthService,
-    private router: Router
-  ) {}
+  constructor(private adminAuthService: AdminAuthService) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Add auth token to requests
     const token = this.adminAuthService.getToken();
+    const isAdminCall = request.url.includes('/api/admin');
 
-    if (token && request.url.includes('localhost:5000')) {
+    if (token && isAdminCall) {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -26,8 +23,9 @@ export class AdminAuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        // Auto logout on 401 or 403
-        if (error.status === 401 || error.status === 403) {
+        // Auto logout when the API rejects the admin session — public
+        // endpoints never trigger this.
+        if (isAdminCall && (error.status === 401 || error.status === 403)) {
           this.adminAuthService.logout();
         }
         return throwError(() => error);

@@ -11,7 +11,7 @@ import { CasesService, BeforeAfterCase } from './cases.service';
 import { DoctorsService } from '../../admin/services/doctors.service';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
 import { ServicesService, Service as BackendService } from '../../admin/services/services.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
 
 @Component({
@@ -59,7 +59,7 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
     private doctorsService: DoctorsService,
     private demoModeService: DemoModeService,
     private servicesService: ServicesService,
-    private supabaseService: SupabaseService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService
   ) {}
 
@@ -83,54 +83,48 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   loadPageContentFromSupabase() {
-    this.supabaseService.getClient()
-      .from('page_content')
-      .select('content')
-      .eq('page_key', 'services-page')
-      .single()
-      .then((response: any) => {
-        if (response.error) {
-          console.warn('⚠️ No page content found in Supabase, using default');
-          this.pageContent = this.demoModeService.getDemoPageContent('services-page');
-        } else {
-          this.pageContent = response.data?.content || {};
-          console.log('✅ Loaded services-page content from Supabase');
-        }
-      });
+    this.supabaseService.getPageContent('services-page').subscribe(content => {
+      if (!content) {
+        console.warn('⚠️ No page content found in the database, using default');
+        this.pageContent = this.demoModeService.getDemoPageContent('services-page');
+      } else {
+        this.pageContent = content;
+        console.log('✅ Loaded services-page content from the database');
+      }
+    });
   }
 
   loadParentServices() {
-    // Load parent services from Supabase via AdminSupabaseService
-    this.supabaseService.getClient()
-      .from('services')
-      .select('category, parent_service')
-      .then((response: any) => {
-        if (response.error) {
-          console.error('❌ Error loading parent services:', response.error);
-          // Fallback to localStorage
-          const saved = localStorage.getItem('parentServices');
-          this.parentServices = saved ? JSON.parse(saved) : [];
-        } else {
-          // Extract unique categories from services
-          const categories = new Set<string>();
-          (response.data || []).forEach((service: any) => {
-            const cat = service.parent_service || service.category;
-            if (cat) categories.add(cat);
-          });
+    // Load parent service categories from the API
+    this.supabaseService.getServiceCategories().subscribe({
+      next: (rows) => {
+        // Extract unique categories from services
+        const categories = new Set<string>();
+        rows.forEach((service: any) => {
+          const cat = service.parent_service || service.category;
+          if (cat) categories.add(cat);
+        });
 
-          // Create parent services array
-          this.parentServices = Array.from(categories).map((name, index) => ({
-            id: `cat_${index}`,
-            name: name,
-            slug: name.toLowerCase().replace(/\s+/g, '-'),
-            order: index
-          }));
+        // Create parent services array
+        this.parentServices = Array.from(categories).map((name, index) => ({
+          id: `cat_${index}`,
+          name: name,
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          order: index
+        }));
 
-          console.log('✅ Loaded', this.parentServices.length, 'parent service categories from Supabase');
-        }
+        console.log('✅ Loaded', this.parentServices.length, 'parent service categories from the database');
         // Sort by order
         this.parentServices.sort((a, b) => a.order - b.order);
-      });
+      },
+      error: (error) => {
+        console.error('❌ Error loading parent services:', error);
+        // Fallback to localStorage
+        const saved = localStorage.getItem('parentServices');
+        this.parentServices = saved ? JSON.parse(saved) : [];
+        this.parentServices.sort((a, b) => a.order - b.order);
+      }
+    });
   }
 
   loadAllDoctorsCache() {

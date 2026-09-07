@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DemoModeService } from './admin/services/demo-mode.service';
-import { SupabaseService } from './shared/services/supabase.service';
-import { environment } from '../environments/environment';
+import { ContentService } from './shared/services/content.service';
 
 @Component({
   selector: 'app-root',
@@ -14,27 +12,18 @@ import { environment } from '../environments/environment';
 export class AppComponent implements OnInit {
   title = 'nouvelage-angular';
 
-  constructor(
-    private demoModeService: DemoModeService,
-    private supabase: SupabaseService
-  ) {}
+  constructor(private content: ContentService) {}
 
   ngOnInit(): void {
-    // Clear all localStorage caches to force Supabase loading
+    // Clear all localStorage caches so every page loads fresh from the API
     this.clearAllCaches();
 
-    // Initialize Supabase connection
-    this.supabase.initialize(
-      environment.supabase.url,
-      environment.supabase.anonKey
-    );
-
-    // Test Supabase connection
-    this.supabase.testConnection().then(success => {
+    // Verify the API is reachable (non-blocking)
+    this.content.testConnection().then(success => {
       if (success) {
-        console.log('✅ Connected to Supabase database - all data will load from cloud');
+        console.log('✅ Connected to Nouvelage API - all data will load from the database');
       } else {
-        console.warn('⚠️ Supabase connection failed - check credentials');
+        console.warn('⚠️ Nouvelage API connection failed - check that the backend is running');
       }
     });
   }
@@ -48,6 +37,6 @@ export class AppComponent implements OnInit {
     localStorage.removeItem('mediaLibrary');
     const pages = ['landing', 'forher', 'forhim', 'services', 'contact', 'blog', 'post', 'team', 'bundles-page'];
     pages.forEach(page => localStorage.removeItem(`demo_page_${page}`));
-    console.log('🧹 Cleared all localStorage caches - loading fresh from Supabase');
+    console.log('🧹 Cleared all localStorage caches - loading fresh from the API');
   }
 }

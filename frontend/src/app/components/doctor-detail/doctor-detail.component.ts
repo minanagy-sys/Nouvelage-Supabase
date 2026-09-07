@@ -6,7 +6,7 @@ import { DOCS, SVC_DOCTORS, SERVICES_DATA, Service, Doctor as OldDoctor } from '
 import { CasesService, BeforeAfterCase } from '../services/cases.service';
 import { DoctorsService, Doctor } from '../../admin/services/doctors.service';
 import { ServicesService, Service as BackendService } from '../../admin/services/services.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { BookingsService } from '../../admin/services/bookings.service';
@@ -73,7 +73,7 @@ export class DoctorDetailComponent implements OnInit {
     private casesService: CasesService,
     private doctorsService: DoctorsService,
     private servicesService: ServicesService,
-    private supabaseService: SupabaseService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService
   ) {}
 

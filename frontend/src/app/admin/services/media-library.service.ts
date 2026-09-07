@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AdminSupabaseService } from './admin-supabase.service';
+import { AdminContentService } from './admin-content.service';
 
 export interface MediaFile {
   id: string;
@@ -18,7 +18,7 @@ export interface MediaFile {
   providedIn: 'root'
 })
 export class MediaLibraryService {
-  constructor(private adminSupabase: AdminSupabaseService) {}
+  constructor(private adminSupabase: AdminContentService) {}
 
   getAllMedia(): Observable<MediaFile[]> {
     return this.adminSupabase.getAllMedia();
@@ -57,7 +57,7 @@ export class MediaLibraryService {
   updateMedia(id: string, updates: Partial<MediaFile>): Observable<boolean> {
     // Update via Supabase
     return new Observable(observer => {
-      // AdminSupabaseService doesn't have updateMedia yet, need to add it
+      // AdminContentService doesn't have updateMedia yet, need to add it
       observer.next(true);
       observer.complete();
     });

@@ -9,7 +9,7 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DoctorsService, Doctor } from '../../admin/services/doctors.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
 
 @Component({
@@ -37,7 +37,7 @@ export class ForherComponent implements OnInit, AfterViewInit {
     private googleSheetsService: GoogleSheetsService,
     private demoModeService: DemoModeService,
     private doctorsService: DoctorsService,
-    private supabaseService: SupabaseService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService
   ) {}
 
@@ -201,22 +201,16 @@ export class ForherComponent implements OnInit, AfterViewInit {
   }
 
   loadPageContent(): void {
-    // Load page content directly from Supabase
-    console.log('🔄 For Her - Loading page content from Supabase...');
-    this.supabaseService.getClient()
-      .from('page_content')
-      .select('content')
-      .eq('page_key', 'forher')
-      .single()
-      .then((response: any) => {
-        console.log('📦 For Her - Supabase response:', response);
-        if (response.error) {
-          console.warn('⚠️ For Her - No page content found in Supabase, using default');
-          console.error('❌ For Her - Error:', response.error);
+    // Load page content from the API
+    console.log('🔄 For Her - Loading page content from the database...');
+    this.supabaseService.getPageContent('forher')
+      .subscribe((content: any) => {
+        if (!content) {
+          console.warn('⚠️ For Her - No page content found in the database, using default');
           this.pageContent = this.demoModeService.getDemoPageContent('forher');
         } else {
-          this.pageContent = response.data?.content || {};
-          console.log('✅ For Her - Loaded page content from Supabase');
+          this.pageContent = content;
+          console.log('✅ For Her - Loaded page content from the database');
           console.log('📋 For Her - Full page content:', this.pageContent);
           console.log('👥 For Her - doctors_featured field:', this.pageContent.doctors_featured);
           console.log('👥 For Her - doctors_featured type:', typeof this.pageContent.doctors_featured);

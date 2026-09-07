@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AdminSupabaseService } from './admin-supabase.service';
+import { AdminContentService } from './admin-content.service';
 
 export interface BlogPost {
   id: string;
@@ -30,7 +30,7 @@ export interface BlogPost {
   providedIn: 'root'
 })
 export class BlogService {
-  constructor(private adminSupabase: AdminSupabaseService) {}
+  constructor(private adminSupabase: AdminContentService) {}
 
   getAllPosts(): Observable<BlogPost[]> {
     return this.adminSupabase.getAllBlogPosts();

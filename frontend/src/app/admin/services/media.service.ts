@@ -1,225 +1,108 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { AdminAuthService } from './admin-auth.service';
 
+/**
+ * Media upload service. Files go to the Nouvelage API, which converts every
+ * image to WebP, writes 480/768/1200 responsive variants, and files it by
+ * department → entity → semantic name:
+ *
+ *   /assets/img/media-library/doctors/{doctor-slug}/profile.webp
+ *   /assets/img/media-library/doctors/{doctor-slug}/case-3-face-before.webp
+ *   /assets/img/media-library/pages/{page-name}/{image-type}.webp
+ *
+ * Every method returns the canonical web path — image bytes never enter the
+ * database.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class MediaService {
-  private uploadApiUrl = environment.uploadApiUrl;
+  private uploadUrl = `${environment.apiUrl}/admin/media/upload`;
 
-  /**
-   * Saves a doctor profile image and returns the file path
-   * Structure: /assets/img/media-library/doctors/{doctor-slug}/profile.{ext}
-   */
+  constructor(private adminAuthService: AdminAuthService) {}
+
+  /** Saves a doctor profile image and returns the file path. */
   async saveDoctorProfile(file: File, doctorSlug: string): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `profile.${extension}`;
-    const uploadPath = `public/assets/img/media-library/doctors/${doctorSlug}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Profile image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Profile image upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'doctors', doctorSlug, 'profile');
   }
 
-  /**
-   * Saves a case before/after image and returns the file path
-   * Structure: /assets/img/media-library/doctors/{doctor-slug}/cases/case-{N}-{category}/before.{ext}
-   */
+  /** Saves a doctor before/after case image and returns the file path. */
   async saveCaseImage(file: File, doctorSlug: string, caseNumber: number, type: 'before' | 'after', category: string = ''): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `${type}.${extension}`;
-
-    // Create slug from category name
-    const categorySlug = category
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .trim() || 'treatment';
-
-    const folderName = `case-${caseNumber}-${categorySlug}`;
-    const uploadPath = `public/assets/img/media-library/doctors/${doctorSlug}/cases/${folderName}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ ${type} image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error(`❌ ${type} image upload failed:`, error);
-      throw error;
-    }
+    const categorySlug = this.slugify(category) || 'treatment';
+    return this.uploadFile(file, 'doctors', doctorSlug, `case-${caseNumber}-${categorySlug}-${type}`);
   }
 
-  /**
-   * Saves a page image (hero, background, etc.) and returns the file path
-   * Structure: /assets/img/media-library/pages/{page-name}/{filename}
-   */
+  /** Saves a page image (hero, background, etc.) and returns the file path. */
   async savePageImage(file: File, pageName: string, imageType: string): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `${imageType}.${extension}`;
-    const uploadPath = `public/assets/img/media-library/pages/${pageName}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Page image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Page image upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'pages', pageName, imageType);
   }
 
-  /**
-   * Saves a blog post image and returns the file path
-   * Structure: /assets/img/media-library/blog/{post-slug}/{filename}
-   */
+  /** Saves a blog post image and returns the file path. */
   async saveBlogImage(file: File, postSlug: string, imageType: string = 'image'): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const timestamp = Date.now();
-    const filename = `${imageType}-${timestamp}.${extension}`;
-    const uploadPath = `public/assets/img/media-library/blog/${postSlug}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Blog image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Blog image upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'blog', postSlug, `${imageType}-${Date.now()}`);
   }
 
-  /**
-   * Saves a blog featured image and returns the file path
-   * Structure: /assets/img/media-library/blog/{post-slug}/featured.{ext}
-   */
+  /** Saves a blog featured image and returns the file path. */
   async saveBlogFeaturedImage(file: File, postSlug: string): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `featured.${extension}`;
-    const uploadPath = `public/assets/img/media-library/blog/${postSlug}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Blog featured image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Blog featured image upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'blog', postSlug, 'featured');
   }
 
-  /**
-   * Saves a service image and returns the file path
-   * Structure: /assets/img/media-library/services/{service-slug}/{filename}
-   */
+  /** Saves a service image and returns the file path. */
   async saveServiceImage(file: File, serviceSlug: string, imageType: string = 'image'): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `${imageType}.${extension}`;
-    const uploadPath = `public/assets/img/media-library/services/${serviceSlug}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Service image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Service image upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'services', serviceSlug, imageType);
   }
 
-  /**
-   * Saves a service icon and returns the file path
-   * Structure: /assets/img/media-library/services/{service-slug}/icon.{ext}
-   */
+  /** Saves a service icon and returns the file path. */
   async saveServiceIcon(file: File, serviceSlug: string): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
-    const filename = `icon.${extension}`;
-    const uploadPath = `public/assets/img/media-library/services/${serviceSlug}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Service icon uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ Service icon upload failed:', error);
-      throw error;
-    }
+    return this.uploadFile(file, 'services', serviceSlug, 'icon');
   }
 
-  /**
-   * Saves a service before/after image and returns the file path
-   * Structure: /assets/img/media-library/services/{service-slug}/cases/case-{N}/{before|after}.{ext}
-   */
+  /** Saves a service before/after image and returns the file path. */
   async saveServiceCaseImage(file: File, serviceSlug: string, caseNumber: number, type: 'before' | 'after'): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `${type}.${extension}`;
-    const uploadPath = `public/assets/img/media-library/services/${serviceSlug}/cases/case-${caseNumber}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ Service ${type} image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error(`❌ Service ${type} image upload failed:`, error);
-      throw error;
-    }
+    return this.uploadFile(file, 'services', serviceSlug, `case-${caseNumber}-${type}`);
   }
 
-  /**
-   * Saves a general media library image (not categorized)
-   * Structure: /assets/img/media-library/general/{filename}
-   */
+  /** Saves a general media library image (not categorized). */
   async saveGeneralImage(file: File, category: string = 'general'): Promise<string> {
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const timestamp = Date.now();
-    const sanitizedName = file.name
-      .replace(/\.[^/.]+$/, '') // Remove extension
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-    const filename = `${sanitizedName}-${timestamp}.${extension}`;
-    const uploadPath = `public/assets/img/media-library/${category}`;
-
-    try {
-      const result = await this.uploadFile(file, uploadPath, filename);
-      console.log(`✅ General image uploaded successfully: ${result.path}`);
-      return result.path;
-    } catch (error) {
-      console.error('❌ General image upload failed:', error);
-      throw error;
-    }
+    const baseName = this.slugify(file.name.replace(/\.[^/.]+$/, '')) || 'image';
+    return this.uploadFile(file, this.slugify(category) || 'general', 'general', `${baseName}-${Date.now()}`);
   }
 
-  /**
-   * Uploads a file to the upload server
-   */
-  private async uploadFile(file: File, uploadPath: string, filename: string): Promise<any> {
+  /** Uploads a file to the API media pipeline and returns the canonical path. */
+  private async uploadFile(file: File, department: string, entity: string, name: string): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('uploadPath', uploadPath);
-    formData.append('filename', filename);
+    formData.append('department', department);
+    formData.append('entity', entity);
+    formData.append('name', name);
 
-    const response = await fetch(this.uploadApiUrl, {
+    const token = this.adminAuthService.getToken();
+    const response = await fetch(this.uploadUrl, {
       method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error || `Upload failed: ${response.statusText}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result.media.path;
   }
 
-  /**
-   * Generates a sanitized slug from doctor name
-   */
+  private slugify(value: string): string {
+    return (value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .trim();
+  }
+
+  /** Generates a sanitized slug from doctor name. */
   generateDoctorSlug(doctorName: string): string {
     return doctorName
       .toLowerCase()
@@ -230,39 +113,18 @@ export class MediaService {
       .trim();
   }
 
-  /**
-   * Generates a sanitized slug from service name
-   */
+  /** Generates a sanitized slug from service name. */
   generateServiceSlug(serviceName: string): string {
-    return serviceName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .trim();
+    return this.slugify(serviceName);
   }
 
-  /**
-   * Generates a sanitized slug from blog post title
-   */
+  /** Generates a sanitized slug from blog post title. */
   generateBlogSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .trim();
+    return this.slugify(title);
   }
 
-  /**
-   * Generates a sanitized slug from page name
-   */
+  /** Generates a sanitized slug from page name. */
   generatePageSlug(pageName: string): string {
-    return pageName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .trim();
+    return this.slugify(pageName);
   }
 }

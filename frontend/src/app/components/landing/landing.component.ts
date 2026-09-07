@@ -7,6 +7,7 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-landing',
@@ -102,10 +103,10 @@ export class LandingComponent implements OnInit {
       this.overlayOpacity = content.overlay_opacity || this.overlayOpacity;
     } else {
       // Try to load content from backend API
-      this.http.get<any>('http://localhost:5000/api/pages/landing').subscribe({
+      this.http.get<any>(`${environment.apiUrl}/content/pages/landing`).subscribe({
         next: (response) => {
-          if (response.page) {
-            const content = response.page;
+          if (response.content) {
+            const content = response.content;
 
             // Brand Header Logo
             this.logoUrl = content.logo_url || this.logoUrl;

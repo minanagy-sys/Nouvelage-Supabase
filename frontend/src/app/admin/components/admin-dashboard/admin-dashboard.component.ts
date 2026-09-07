@@ -12,8 +12,8 @@ import { MediaService } from '../../services/media.service';
 import { ServicesService, Service, ServiceOffer, ServiceSection } from '../../services/services.service';
 import { BlogService, BlogPost as BlogServicePost } from '../../services/blog.service';
 import { MediaLibraryService, MediaFile } from '../../services/media-library.service';
-import { AdminSupabaseService } from '../../services/admin-supabase.service';
-import { SupabaseService } from '../../../shared/services/supabase.service';
+import { AdminContentService } from '../../services/admin-content.service';
+import { ContentService } from '../../../shared/services/content.service';
 import { BookingsService, Booking } from '../../services/bookings.service';
 
 type TabType = 'overview' | 'landing' | 'forher' | 'forhim' | 'services-page' |
@@ -252,8 +252,8 @@ export class AdminDashboardComponent implements OnInit {
     private servicesService: ServicesService,
     private blogService: BlogService,
     private mediaLibraryService: MediaLibraryService,
-    private adminSupabaseService: AdminSupabaseService,
-    private supabaseService: SupabaseService,
+    private adminSupabaseService: AdminContentService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService
   ) {}
 

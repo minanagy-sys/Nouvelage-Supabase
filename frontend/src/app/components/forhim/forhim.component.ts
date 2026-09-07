@@ -6,7 +6,7 @@ import { GoogleSheetsService } from '../../services/google-sheets.service';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
 
 @Component({
@@ -31,7 +31,7 @@ export class ForhimComponent implements OnInit, AfterViewInit {
   constructor(
     private router: Router,
     private googleSheetsService: GoogleSheetsService,
-    private supabaseService: SupabaseService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService
   ) {}
 
@@ -154,19 +154,15 @@ export class ForhimComponent implements OnInit, AfterViewInit {
   }
 
   loadPageContent(): void {
-    // Load page content directly from Supabase - NO FALLBACK
-    this.supabaseService.getClient()
-      .from('page_content')
-      .select('content')
-      .eq('page_key', 'forhim')
-      .single()
-      .then((response: any) => {
-        if (response.error) {
-          console.error('❌ No page content found in Supabase for forhim');
+    // Load page content from the API - NO FALLBACK
+    this.supabaseService.getPageContent('forhim')
+      .subscribe((content: any) => {
+        if (!content) {
+          console.error('❌ No page content found in the database for forhim');
           this.pageContent = { forhim_doctors_featured: [] };
         } else {
-          this.pageContent = response.data?.content || { forhim_doctors_featured: [] };
-          console.log('✅ Loaded forhim page content from Supabase');
+          this.pageContent = content || { forhim_doctors_featured: [] };
+          console.log('✅ Loaded forhim page content from the database');
           console.log('👥 Featured doctors (before cleanup):', this.pageContent.forhim_doctors_featured);
 
           // Clean up invalid demo IDs (doc_001, doc_002, etc.) before loading doctors

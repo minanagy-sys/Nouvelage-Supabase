@@ -9,7 +9,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DoctorsService, Doctor } from '../../admin/services/doctors.service';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
 
@@ -59,7 +59,7 @@ export class TeamComponent implements OnInit, AfterViewInit {
     private el: ElementRef,
     private doctorsService: DoctorsService,
     private demoModeService: DemoModeService,
-    private supabaseService: SupabaseService,
+    private supabaseService: ContentService,
     private bookingsService: BookingsService,
     private title: Title,
     private meta: Meta,

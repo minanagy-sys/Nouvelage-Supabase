@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, map, tap, catchError } from 'rxjs';
 import { Router } from '@angular/router';
-import type { User } from '@supabase/supabase-js';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { environment } from '../../../environments/environment';
 
 export interface AdminUser {
   id: string;
@@ -16,11 +16,14 @@ export interface LoginResponse {
   user: AdminUser;
 }
 
+const TOKEN_KEY = 'nouvelage_admin_token';
+const USER_KEY = 'nouvelage_admin_user';
+
 /**
- * Admin authentication backed by Supabase Auth.
- * Admin accounts live in Supabase's built-in `auth.users` (hashed passwords).
- * The logged-in session flows through the shared Supabase client, so every
- * admin DB write is performed as an authenticated user.
+ * Admin authentication backed by the Nouvelage API (JWT).
+ * Admin accounts live in the MySQL admin_users table (bcrypt hashes);
+ * the API re-checks the account on every request, so deactivating an
+ * account takes effect immediately.
  */
 @Injectable({
   providedIn: 'root'
@@ -29,58 +32,36 @@ export class AdminAuthService {
   private currentUserSubject = new BehaviorSubject<AdminUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private accessToken: string | null = null;
+  private apiUrl = environment.apiUrl;
 
   constructor(
-    private supabase: SupabaseService,
+    private http: HttpClient,
     private router: Router
   ) {
-    const client = this.supabase.getClient();
-
-    // Hydrate from any persisted session on startup.
-    client.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        this.accessToken = data.session.access_token;
-        this.currentUserSubject.next(this.mapUser(data.session.user));
+    // Hydrate from any persisted session on startup; checkSession() later
+    // confirms the token is still valid against the API.
+    if (typeof window !== 'undefined') {
+      this.accessToken = localStorage.getItem(TOKEN_KEY);
+      const storedUser = localStorage.getItem(USER_KEY);
+      if (this.accessToken && storedUser) {
+        try {
+          this.currentUserSubject.next(JSON.parse(storedUser));
+        } catch {
+          this.clearSession();
+        }
       }
-    });
-
-    // Keep local state in sync with sign-in / sign-out / token refresh.
-    client.auth.onAuthStateChange((_event, session) => {
-      this.accessToken = session?.access_token ?? null;
-      this.currentUserSubject.next(session ? this.mapUser(session.user) : null);
-    });
-  }
-
-  private mapUser(user: User): AdminUser {
-    const meta = (user.user_metadata ?? {}) as { name?: string; role?: string };
-    return {
-      id: user.id,
-      email: user.email ?? '',
-      name: meta.name || user.email || 'Admin',
-      role: meta.role || 'admin'
-    };
+    }
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return from(
-      this.supabase.getClient().auth.signInWithPassword({ email, password })
-    ).pipe(
-      map(({ data, error }) => {
-        if (error) throw error;
-        const user = this.mapUser(data.user);
-        this.accessToken = data.session?.access_token ?? null;
-        this.currentUserSubject.next(user);
-        return { token: this.accessToken ?? '', user };
-      })
+    return this.http.post<LoginResponse>(`${this.apiUrl}/admin/auth/login`, { email, password }).pipe(
+      tap(response => this.storeSession(response.token, response.user))
     );
   }
 
   logout(): void {
-    this.supabase.getClient().auth.signOut().finally(() => {
-      this.accessToken = null;
-      this.currentUserSubject.next(null);
-      this.router.navigate(['/admin/login']);
-    });
+    this.clearSession();
+    this.router.navigate(['/admin/login']);
   }
 
   getToken(): string | null {
@@ -92,15 +73,19 @@ export class AdminAuthService {
   }
 
   /**
-   * Authoritative async session check for the route guard.
+   * Authoritative async session check for the route guard — the token is
+   * validated against the API, not just checked for presence.
    */
   checkSession(): Observable<boolean> {
-    return from(this.supabase.getClient().auth.getSession()).pipe(
-      map(({ data }) => {
-        const session = data.session;
-        this.accessToken = session?.access_token ?? null;
-        this.currentUserSubject.next(session ? this.mapUser(session.user) : null);
-        return !!session;
+    if (!this.accessToken) return of(false);
+    return this.http.get<{ user: AdminUser }>(`${this.apiUrl}/admin/auth/me`).pipe(
+      map(response => {
+        this.currentUserSubject.next(response.user);
+        return true;
+      }),
+      catchError(() => {
+        this.clearSession();
+        return of(false);
       })
     );
   }
@@ -110,15 +95,30 @@ export class AdminAuthService {
   }
 
   getMe(): Observable<{ user: AdminUser }> {
-    return from(this.supabase.getClient().auth.getUser()).pipe(
-      map(({ data, error }) => {
-        if (error) throw error;
-        return { user: this.mapUser(data.user) };
-      })
+    return this.http.get<{ user: AdminUser }>(`${this.apiUrl}/admin/auth/me`).pipe(
+      tap(response => this.currentUserSubject.next(response.user))
     );
   }
 
-  changePassword(_currentPassword: string, newPassword: string): Observable<any> {
-    return from(this.supabase.getClient().auth.updateUser({ password: newPassword }));
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/auth/change-password`, { currentPassword, newPassword });
+  }
+
+  private storeSession(token: string, user: AdminUser): void {
+    this.accessToken = token;
+    this.currentUserSubject.next(user);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+  }
+
+  private clearSession(): void {
+    this.accessToken = null;
+    this.currentUserSubject.next(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
   }
 }

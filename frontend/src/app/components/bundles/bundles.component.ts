@@ -2,7 +2,7 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
@@ -32,7 +32,7 @@ export class BundlesComponent implements OnInit {
 
   constructor(
     private demoModeService: DemoModeService,
-    private supabase: SupabaseService,
+    private supabase: ContentService,
     private router: Router,
     private cartService: CartService,
     private bookingsService: BookingsService,
@@ -47,20 +47,15 @@ export class BundlesComponent implements OnInit {
   }
 
   loadPageContentFromSupabase(): void {
-    this.supabase.getClient()
-      .from('page_content')
-      .select('content')
-      .eq('page_key', 'bundles-page')
-      .single()
-      .then((response: any) => {
-        if (response.error) {
-          console.warn('⚠️ No page content found in Supabase, using default');
-          this.pageContent = this.demoModeService.getDemoPageContent('bundles-page');
-        } else {
-          this.pageContent = response.data?.content || {};
-          console.log('✅ Loaded bundles-page content from Supabase');
-        }
-      });
+    this.supabase.getPageContent('bundles-page').subscribe(content => {
+      if (!content) {
+        console.warn('⚠️ No page content found in the database, using default');
+        this.pageContent = this.demoModeService.getDemoPageContent('bundles-page');
+      } else {
+        this.pageContent = content;
+        console.log('✅ Loaded bundles-page content from the database');
+      }
+    });
   }
 
   // Helper to convert snake_case to camelCase

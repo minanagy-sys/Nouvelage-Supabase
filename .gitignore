@@ -75,3 +75,6 @@ database.sql
 *.bak*
 *.final
 *.orig
+
+# Angular build cache
+.angular/

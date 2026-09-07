@@ -10,9 +10,10 @@
  *              blog posts "post_...", media "media_...")
  *
  * Field types: text, longtext, int, decimal, bool, json, timestamp.
- * `orderColumn` names the sort_order-style column; it is deliberately absent
- * from every field list — position is set by appending on create and by the
- * reorder endpoint, never by typing a number.
+ * `orderColumn` names the sort_order-style column: new rows append at the
+ * end when the client sends no position, and the reorder endpoint persists
+ * drag-and-drop orderings. order_index stays declared as a plain field
+ * because the existing dashboard also writes it directly.
  */
 const uuid = { idType: 'uuid' };
 const custom = { idType: 'custom' };
@@ -60,6 +61,7 @@ export const RESOURCES = {
       { column: 'slider_order', type: 'int' },
       { column: 'catalogue_theme', type: 'text' },
       { column: 'catalogue_badge', type: 'text' },
+      { column: 'order_index', type: 'int' },
     ],
   },
 
@@ -76,6 +78,7 @@ export const RESOURCES = {
       { column: 'description', type: 'longtext' },
       { column: 'icon', type: 'text' },
       { column: 'is_active', type: 'bool' },
+      { column: 'order_index', type: 'int' },
     ],
   },
 
@@ -111,6 +114,7 @@ export const RESOURCES = {
       { column: 'philosophy', type: 'longtext' },
       { column: 'featured', type: 'bool' },
       { column: 'is_active', type: 'bool' },
+      { column: 'order_index', type: 'int' },
       { column: 'meta_title', type: 'text' },
       { column: 'meta_description', type: 'longtext' },
       { column: 'meta_keywords', type: 'longtext' },
@@ -145,6 +149,7 @@ export const RESOURCES = {
       { column: 'tags', type: 'json' },
       { column: 'featured', type: 'bool' },
       { column: 'is_active', type: 'bool' },
+      { column: 'order_index', type: 'int' },
       { column: 'meta_title', type: 'text' },
       { column: 'meta_description', type: 'longtext' },
       { column: 'meta_keywords', type: 'longtext' },
@@ -200,6 +205,7 @@ export const RESOURCES = {
       { column: 'show_in_map', type: 'bool' },
       { column: 'image', type: 'text' },
       { column: 'is_active', type: 'bool' },
+      { column: 'order_index', type: 'int' },
     ],
   },
 

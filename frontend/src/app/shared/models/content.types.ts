@@ -1,7 +1,6 @@
 // ============================================================================
-// SUPABASE DATABASE TYPES
-// TypeScript interfaces matching Supabase schema
-// Auto-generated from supabase-schema.sql
+// CONTENT DATABASE TYPES
+// TypeScript interfaces matching the MySQL schema (backend/db/schema.sql)
 // ============================================================================
 
 // ============================================================================
@@ -370,84 +369,4 @@ export interface Booking {
   status: string;
   created_at?: string;
   updated_at?: string;
-}
-
-// ============================================================================
-// REQUEST/RESPONSE TYPES
-// ============================================================================
-export interface SupabaseResponse<T> {
-  data: T | null;
-  error: SupabaseError | null;
-}
-
-export interface SupabaseError {
-  message: string;
-  details?: string;
-  hint?: string;
-  code?: string;
-}
-
-// ============================================================================
-// DATABASE TABLES
-// ============================================================================
-export interface Database {
-  public: {
-    Tables: {
-      page_content: {
-        Row: PageContent;
-        Insert: Omit<PageContent, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<PageContent, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      parent_bundles: {
-        Row: ParentBundle;
-        Insert: Omit<ParentBundle, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<ParentBundle, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      bundles: {
-        Row: Bundle;
-        Insert: Omit<Bundle, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Bundle, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      doctors: {
-        Row: Doctor;
-        Insert: Omit<Doctor, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Doctor, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      blog_posts: {
-        Row: BlogPost;
-        Insert: Omit<BlogPost, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      media_library: {
-        Row: MediaFile;
-        Insert: Omit<MediaFile, 'uploaded_at'>;
-        Update: Partial<Omit<MediaFile, 'id' | 'uploaded_at'>>;
-      };
-      services: {
-        Row: Service;
-        Insert: Omit<Service, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Service, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      branches: {
-        Row: Branch;
-        Insert: Omit<Branch, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Branch, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      contact_submissions: {
-        Row: ContactSubmission;
-        Insert: Omit<ContactSubmission, 'id' | 'submitted_at' | 'updated_at'>;
-        Update: Partial<Omit<ContactSubmission, 'id' | 'submitted_at' | 'updated_at'>>;
-      };
-      settings: {
-        Row: Setting;
-        Insert: Omit<Setting, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Setting, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      bookings: {
-        Row: Booking;
-        Insert: Omit<Booking, 'id'> & { id?: string };
-        Update: Partial<Omit<Booking, 'id'>>;
-      };
-    };
-  };
 }

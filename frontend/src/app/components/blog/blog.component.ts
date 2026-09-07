@@ -6,7 +6,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
 import { BlogService } from '../../admin/services/blog.service';
-import { SupabaseService } from '../../shared/services/supabase.service';
+import { ContentService } from '../../shared/services/content.service';
 
 interface BlogPost {
   id: string;
@@ -56,7 +56,7 @@ export class BlogComponent implements OnInit {
     private router: Router,
     private demoModeService: DemoModeService,
     private blogService: BlogService,
-    private supabaseService: SupabaseService
+    private supabaseService: ContentService
   ) {}
 
   ngOnInit(): void {

@@ -1,30 +1,30 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { SupabaseService } from '../../shared/services/supabase.service';
-import { Booking } from '../../shared/models/supabase.types';
+import { environment } from '../../../environments/environment';
+import { Booking } from '../../shared/models/content.types';
 
 // Re-export Booking for convenience
-export type { Booking } from '../../shared/models/supabase.types';
+export type { Booking } from '../../shared/models/content.types';
 
+/**
+ * Bookings — appointment requests and checkout orders.
+ * Creation goes through the public API endpoint (the server generates the
+ * NV booking number); everything else is admin-only.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class BookingsService {
-  private tableName = 'bookings';
+  private apiUrl = environment.apiUrl;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Create a new booking
-   */
+  /** Create a new booking (public — used by every lead form and checkout). */
   createBooking(bookingInput: any): Observable<Booking> {
-    // Generate booking number
-    const bookingNumber = this.generateConfirmationNumber();
-
-    // Map frontend fields to database columns
-    const bookingData: any = {
-      booking_number: bookingNumber,
+    // Map frontend fields to API fields — same normalization as before.
+    const bookingData = {
       name: `${bookingInput.first_name || ''} ${bookingInput.last_name || ''}`.trim() || bookingInput.name || 'Guest',
       email: bookingInput.email || 'no-email@nouvelage.com',
       phone: bookingInput.phone,
@@ -35,23 +35,11 @@ export class BookingsService {
       message: bookingInput.message || bookingInput.notes || null,
       source: bookingInput.source || 'checkout',
       items: bookingInput.items || null,
-      total_amount: bookingInput.total_amount || null,
-      status: bookingInput.booking_status || bookingInput.status || 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      total_amount: bookingInput.total_amount || null
     };
 
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .insert([bookingData])
-        .select()
-        .single()
-    ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return response.data as Booking;
-      }),
+    return this.http.post<{ booking: Booking }>(`${this.apiUrl}/bookings`, bookingData).pipe(
+      map(response => response.booking),
       catchError(error => {
         console.error('Error creating booking:', error);
         throw error;
@@ -59,25 +47,13 @@ export class BookingsService {
     );
   }
 
-  /**
-   * Update booking status
-   */
+  /** Update booking status (admin). */
   updateBookingStatus(bookingId: string, newStatus: string): Observable<Booking> {
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId)
-        .select()
-        .single()
+    return this.http.patch<{ booking: Booking }>(
+      `${this.apiUrl}/admin/bookings/${bookingId}/status`,
+      { status: newStatus }
     ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return response.data as Booking;
-      }),
+      map(response => response.booking),
       catchError(error => {
         console.error('Error updating booking status:', error);
         throw error;
@@ -85,36 +61,19 @@ export class BookingsService {
     );
   }
 
-  /**
-   * Get all bookings with optional filters
-   */
+  /** Get all bookings with optional filters (admin). */
   getAllBookings(filters?: {
     status?: string;
     source?: string;
     limit?: number;
   }): Observable<Booking[]> {
-    let query = (this.supabase.getClient()
-      .from('bookings') as any)
-      .select('*')
-      .order('created_at', { ascending: false });
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.source) params = params.set('source', filters.source);
+    if (filters?.limit) params = params.set('limit', filters.limit);
 
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters?.source) {
-      query = query.eq('source', filters.source);
-    }
-
-    if (filters?.limit) {
-      query = query.limit(filters.limit);
-    }
-
-    return from(query).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return (response.data || []) as Booking[];
-      }),
+    return this.http.get<{ bookings: Booking[] }>(`${this.apiUrl}/admin/bookings`, { params }).pipe(
+      map(response => response.bookings || []),
       catchError(error => {
         console.error('Error fetching bookings:', error);
         return of([]);
@@ -122,21 +81,10 @@ export class BookingsService {
     );
   }
 
-  /**
-   * Get a single booking by ID
-   */
+  /** Get a single booking by ID (admin). */
   getBookingById(id: string): Observable<Booking | null> {
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .select('*')
-        .eq('id', id)
-        .single()
-    ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return response.data as Booking;
-      }),
+    return this.http.get<{ booking: Booking }>(`${this.apiUrl}/admin/bookings/${id}`).pipe(
+      map(response => response.booking ?? null),
       catchError(error => {
         console.error('Error fetching booking:', error);
         return of(null);
@@ -144,31 +92,7 @@ export class BookingsService {
     );
   }
 
-  /**
-   * Get booking by booking number
-   */
-  getBookingByConfirmation(bookingNumber: string): Observable<Booking | null> {
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .select('*')
-        .eq('booking_number', bookingNumber)
-        .single()
-    ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return response.data as Booking;
-      }),
-      catchError(error => {
-        console.error('Error fetching booking by booking number:', error);
-        return of(null);
-      })
-    );
-  }
-
-  /**
-   * Get booking statistics
-   */
+  /** Get booking statistics (admin). */
   getBookingStats(): Observable<{
     total: number;
     pending: number;
@@ -177,28 +101,8 @@ export class BookingsService {
     cancelled: number;
     totalRevenue: number;
   }> {
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .select('status, total_amount')
-    ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-
-        const bookings = response.data || [];
-        const stats = {
-          total: bookings.length,
-          pending: bookings.filter((b: any) => b.status === 'pending').length,
-          confirmed: bookings.filter((b: any) => b.status === 'confirmed').length,
-          completed: bookings.filter((b: any) => b.status === 'completed').length,
-          cancelled: bookings.filter((b: any) => b.status === 'cancelled').length,
-          totalRevenue: bookings
-            .filter((b: any) => b.status === 'completed')
-            .reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0)
-        };
-
-        return stats;
-      }),
+    return this.http.get<{ stats: any }>(`${this.apiUrl}/admin/bookings/stats`).pipe(
+      map(response => response.stats),
       catchError(error => {
         console.error('Error fetching booking stats:', error);
         return of({
@@ -213,35 +117,14 @@ export class BookingsService {
     );
   }
 
-  /**
-   * Delete a booking
-   */
+  /** Delete a booking (admin). */
   deleteBooking(id: string): Observable<boolean> {
-    return from(
-      (this.supabase.getClient()
-        .from('bookings') as any)
-        .delete()
-        .eq('id', id)
-    ).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return true;
-      }),
+    return this.http.delete(`${this.apiUrl}/admin/bookings/${id}`).pipe(
+      map(() => true),
       catchError(error => {
         console.error('Error deleting booking:', error);
         return of(false);
       })
     );
   }
-
-  /**
-   * Generate a unique confirmation number
-   */
-  private generateConfirmationNumber(): string {
-    const prefix = 'NV';
-    const timestamp = Date.now().toString().slice(-8);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}${timestamp}${random}`;
-  }
-
 }

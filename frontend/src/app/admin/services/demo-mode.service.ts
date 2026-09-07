@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AdminSupabaseService } from './admin-supabase.service';
+import { AdminContentService } from './admin-content.service';
 
 @Injectable({
   providedIn: 'root'
@@ -7,7 +7,7 @@ import { AdminSupabaseService } from './admin-supabase.service';
 export class DemoModeService {
   private isDemoMode = true; // Set to true for demo access
 
-  constructor(private adminSupabase: AdminSupabaseService) {}
+  constructor(private adminSupabase: AdminContentService) {}
 
   // Demo data for all pages (default fallback only)
   private demoPageContent: { [key: string]: any } = {
