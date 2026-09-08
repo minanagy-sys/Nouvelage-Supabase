@@ -83,6 +83,59 @@ Three layers, each absorbing load before the next:
    MySQL is idle even without the cache; the cache exists so it stays idle
    at 100× the traffic.
 
+## The critical path (why the first paint is fast)
+
+Rendering fast on the server is wasted if the browser then sits waiting for
+something before it can paint. Four rules keep the critical path clear, and
+each one exists because breaking it measurably hurt:
+
+1. **Nothing render-blocking may come from another domain.** Fonts are
+   self-hosted (`src/assets/fonts`, `@font-face` at the top of `styles.css`)
+   rather than fetched from `fonts.googleapis.com`, and Leaflet is vendored to
+   `/assets/leaflet` rather than pulled from a CDN. Previously a stylesheet
+   from Google plus a synchronous Leaflet script sat in `<head>`; on the two
+   pages whose templates injected extra font links, the browser painted
+   nothing for **13 seconds**. Now the only blocking resource is our own
+   stylesheet, from our own server.
+2. **Only load what the page uses.** Leaflet (~144KB) loads on demand via
+   `shared/services/leaflet-loader.ts`, so the seven pages without a map
+   never pay for it. Analytics starts on `requestIdleCallback` after `load`,
+   so it can never compete with rendering.
+3. **Preload the fonts every page needs, and only those.** Six faces are used
+   site-wide; they are `rel="preload"`ed in `index.html`. Without that they
+   were discovered only once layout ran, arrived ~400ms after first paint and
+   visibly reflowed the text as each swapped in.
+4. **Set up the page in small pieces.** Page scripts register their widgets
+   through `shared/services/init-scheduler.ts`, which runs one step per task
+   outside Angular's change detection. The previous code called thirteen init
+   functions in a single `setTimeout`, which froze the page for ~700ms and —
+   because they shared one try scope — silently cancelled every step after
+   the first one that threw.
+
+Two things are worth knowing when working on this:
+
+- **`<template>` in a component template breaks hydration.** Its contents are
+  parsed into a separate fragment, so Angular's hydration walk cannot find
+  the nodes it expects; it throws, the component never finishes creating, and
+  every lifecycle hook on that page — sliders, counters, reveals, the map —
+  silently never runs. A stray `<template id="__bundler_thumbnail">` did
+  exactly this to For Her and For Him. If a page's animations are dead, check
+  the browser console for `NG0500` first, and build with
+  `--configuration development` to get the message that names the node.
+- **Images are negotiated, not renamed.** `npm run assets:webp` writes a
+  `<original>.webp` twin beside each JPEG/PNG (~50% smaller) and the server
+  serves it when the browser sends `Accept: image/webp`. Nothing that stores
+  a path has to change — templates, seed data and dashboard-written rows all
+  still say `photo.jpg`. Both the SSR server and nginx send `Vary: Accept`,
+  which is mandatory: without it a shared cache can hand a WebP body to a
+  client that cannot decode it.
+
+Measured on the seven public pages (4× CPU throttle, cold cache), before and
+after this pass: largest contentful paint 4.6s → 0.4s, worst page load 25.8s →
+1.0s, longest single blocking task 728ms → 237ms, layout shift 0.10 → <0.01 on
+a warm cache. Re-measure rather than assume; the harness is described in
+`README.md` under *Checking performance*.
+
 ## Scaling path (in order — don't skip ahead)
 
 Each step is additive; none changes the architecture.

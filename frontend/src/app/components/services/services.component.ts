@@ -13,6 +13,7 @@ import { DemoModeService } from '../../admin/services/demo-mode.service';
 import { ServicesService, Service as BackendService } from '../../admin/services/services.service';
 import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
+import { runInitSteps } from '../../shared/services/init-scheduler';
 
 @Component({
   selector: 'app-services',
@@ -330,10 +331,12 @@ export class ServicesComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     if (!this.isBrowser) return;
-    this.initHeroSlider();
-    this.initOfferSlider();
-    this.initModals();
-    this.initContactForm();
+    runInitSteps(this.zone, [
+      { name: 'initHeroSlider', run: () => this.initHeroSlider() },
+      { name: 'initOfferSlider', run: () => this.initOfferSlider() },
+      { name: 'initModals', run: () => this.initModals() },
+      { name: 'initContactForm', run: () => this.initContactForm() },
+    ]);
   }
 
   ngOnDestroy() {

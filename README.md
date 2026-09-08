@@ -49,14 +49,50 @@ npm start
 ## Build
 
 ```bash
-cd frontend && npm run build      # → frontend/dist/nouvelage-angular/{browser,server}
-npm run serve:ssr:nouvelage-angular   # SSR server on :4200 (SSR_PORT to change)
+cd frontend && npm run build:prod   # → frontend/dist/nouvelage-angular/{browser,server}
+npm run serve:ssr                   # SSR server on :4200 (SSR_PORT to change)
 ```
 
 The SSR server needs the API running (`API_BASE_URL`, default
 http://127.0.0.1:4000/api). In production nginx serves static assets from
 `dist/nouvelage-angular/browser` directly, proxies pages to the SSR server
 and `/api` to the API (see `deploy/nginx.conf.example`).
+
+### Generated assets
+
+Both of these are committed, so a normal build needs neither. Re-run them
+only when you add images or change which font weights the CSS uses:
+
+```bash
+npm run assets:webp     # WebP twin beside each JPEG/PNG (~50% smaller)
+npm run assets:fonts    # re-download the self-hosted webfonts
+```
+
+`assets:webp` needs `sharp`, which lives in `backend/node_modules` — run
+`npm install` in `backend/` first. It is idempotent and skips anything
+already up to date.
+
+## Checking performance
+
+Numbers beat guessing, and this stack has been tuned against measurements
+rather than intuition. To re-measure after a change, run the production
+build, start the API and the SSR server, then drive a real browser:
+
+- Throttle the CPU (4× is a reasonable stand-in for a mid-range laptop);
+  an unthrottled container hides every problem a visitor actually hits.
+- Record **FCP/LCP** (has anything painted yet), **long tasks** (each one is
+  a frozen page), **layout shift** (text jumping after paint) and **wire
+  bytes** (`encodedDataLength` — not `content-length`, which reports the
+  decompressed size and will tell you compression is not working when it is).
+- Measure a **cold and a warm load**. Some costs — webfonts especially — are
+  first-visit only, and treating them as permanent leads to over-engineering.
+- Compare rendered `document.body.innerText` against the previous build. It
+  is the cheapest proof that an optimisation changed no content.
+
+What the current numbers look like, and the four rules that produced them,
+are in `ARCHITECTURE.md` under *The critical path*. If a page's animations,
+sliders or counters are dead, look for `NG0500` in the browser console
+before anything else — see the hydration note in that section.
 
 ## Production
 

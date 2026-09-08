@@ -1,6 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { CommonEngine } from '@angular/ssr';
 import express from 'express';
+import compression from 'compression';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
@@ -31,13 +32,67 @@ export function app(): express.Express {
   server.set('views', browserDistFolder);
   server.disable('x-powered-by');
 
-  // Static files from /browser (hashed bundles are immutable).
+  // Compress text responses. The rendered HTML, the JS bundles and the
+  // stylesheet are several hundred KB of highly compressible text; gzip cuts
+  // that by roughly 3-4x. Images, fonts (woff2) and video are already
+  // compressed, so they are skipped.
+  server.use(
+    compression({
+      threshold: 1024,
+      filter: (req, res) => {
+        const type = String(res.getHeader('Content-Type') || '');
+        if (/^(image|video|audio)\//.test(type) || /font\/|\/zip|\/gzip/.test(type)) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+    }),
+  );
+
+  // WebP negotiation. scripts/generate-webp.mjs writes a "<original>.webp"
+  // twin next to each JPEG/PNG (~50% smaller); when the browser advertises
+  // WebP support and the twin exists, serve that instead. Doing it here rather
+  // than in the markup means nothing has to change the paths it stores —
+  // templates, seed data and dashboard-written rows all still say photo.jpg.
+  //
+  // Vary: Accept is mandatory: without it a shared cache could hand a WebP
+  // body to a client that cannot decode it.
+  const NEGOTIABLE = /\.(?:jpe?g|png)$/i;
+  server.get('**', (req, res, next) => {
+    if (!NEGOTIABLE.test(req.path)) return next();
+    res.setHeader('Vary', 'Accept');
+    if (!/\bimage\/webp\b/.test(req.headers.accept || '')) return next();
+    const twin = join(browserDistFolder, req.path + '.webp');
+    // Confine the lookup to the build output; never follow a path outside it.
+    if (!twin.startsWith(browserDistFolder)) return next();
+    res.sendFile(twin, { maxAge: '30d' }, (err) => {
+      if (err) next();
+    });
+  });
+
+  // Static files from /browser. Cache lifetime depends on whether the name
+  // carries a content hash: a hashed bundle can never change under the same
+  // name, so it is immutable, while a plain .html file must be revalidated or
+  // content edits would stay invisible behind the cache.
+  const HASHED = /-[A-Z0-9]{8,}\.(?:js|css)$/;
   server.get(
     '**',
     express.static(browserDistFolder, {
-      maxAge: '1y',
       index: false,
       fallthrough: true,
+      setHeaders: (res, filePath) => {
+        if (HASHED.test(filePath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (/\.(?:woff2?|ttf|eot)$/.test(filePath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (/\.(?:jpe?g|png|webp|gif|svg|avif|mp4|webm)$/.test(filePath)) {
+          res.setHeader('Cache-Control', 'public, max-age=2592000');
+        } else if (/\.html$/.test(filePath)) {
+          res.setHeader('Cache-Control', 'no-cache');
+        } else {
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
+      },
     }),
   );
 

@@ -10,23 +10,84 @@ server {
     # Static browser assets served straight from disk — never hit Node.
     root /var/www/nouvelage-mysql/frontend/dist/nouvelage-angular/browser;
 
-    # Hashed bundles: immutable long cache
-    location ~* \.(js|css|woff2?)$ {
-        expires 30d;
+    # ── Compression ────────────────────────────────────────────────────────
+    # Text assets are several hundred KB per page uncompressed (the Angular
+    # runtime chunk alone is ~280KB, the stylesheet ~67KB, a rendered page
+    # 90-160KB). gzip cuts that by roughly 3-4x, which is the single largest
+    # saving on a slow connection. Images, woff2 fonts and video are already
+    # compressed and are deliberately not listed.
+    gzip on;
+    gzip_vary on;                 # so caches keep gzip/plain variants apart
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_proxied any;             # also compress what comes back from :4200
+    gzip_types
+        text/plain text/css text/xml
+        application/javascript application/json application/xml
+        application/rss+xml application/manifest+json
+        image/svg+xml;
+
+    # If nginx was built with ngx_brotli, these give another ~15-20% over
+    # gzip. Harmless to leave commented out if the module is absent —
+    # uncommenting without it will stop nginx from starting.
+    # brotli on;
+    # brotli_comp_level 5;
+    # brotli_types text/plain text/css application/javascript application/json image/svg+xml;
+
+    # ── Static assets ─────────────────────────────────────────────────────
+    # Hashed bundles can never change under the same name — cache for a year.
+    location ~* -[A-Z0-9]{8,}\.(js|css)$ {
+        expires 1y;
         add_header Cache-Control "public, immutable";
+        access_log off;
         try_files $uri @ssr;
     }
 
-    # Uploaded media (WebP canonical + responsive variants)
-    location /assets/ {
+    # Self-hosted fonts: content-addressed by family/weight, safe to pin.
+    location ~* \.(woff2?|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files $uri @ssr;
+    }
+
+    # Un-hashed scripts and styles (vendored Leaflet, legacy helpers).
+    location ~* \.(js|css)$ {
         expires 7d;
         add_header Cache-Control "public";
         try_files $uri @ssr;
     }
 
-    # Other static files that live in the browser build (favicon, og images…)
-    location ~* \.(ico|png|jpe?g|webp|avif|svg|gif|txt|xml|json|pdf|html)$ {
-        expires 1d;
+    # JPEG/PNG with transparent WebP negotiation. frontend/scripts/
+    # generate-webp.mjs writes a "<original>.webp" twin for each of these
+    # (~50% smaller); if the browser accepts WebP and the twin exists it is
+    # served instead, otherwise the original is. Nothing in the markup or the
+    # database changes — the stored path stays photo.jpg.
+    #
+    # "Vary: Accept" is required so caches keep the two variants apart; the
+    # $webp_suffix map it depends on is defined at http{} level (see bottom).
+    location ~* \.(png|jpe?g)$ {
+        expires 30d;
+        add_header Cache-Control "public";
+        add_header Vary Accept;
+        access_log off;
+        try_files $uri$webp_suffix $uri @ssr;
+    }
+
+    # Other media (already-compressed formats, icons, video). A month is safe:
+    # the dashboard writes new files rather than replacing bytes under an
+    # existing name.
+    location ~* \.(ico|webp|avif|svg|gif|mp4|webm)$ {
+        expires 30d;
+        add_header Cache-Control "public";
+        access_log off;
+        try_files $uri @ssr;
+    }
+
+    # Data and documents that content edits can change — revalidate.
+    location ~* \.(txt|xml|json|pdf|html)$ {
+        expires 5m;
+        add_header Cache-Control "public, must-revalidate";
         try_files $uri @ssr;
     }
 
@@ -72,6 +133,16 @@ server {
     }
 }
 
-# Place at http{} level (e.g. /etc/nginx/conf.d/ssr-cache.conf):
+# ── Both of these belong at http{} level, not inside server{} ──────────────
+# e.g. in /etc/nginx/conf.d/nouvelage-http.conf:
+#
+#   # SSR micro-cache storage (used by proxy_cache above)
 #   proxy_cache_path /var/cache/nginx/ssr levels=1:2 keys_zone=ssr_cache:10m
 #                    max_size=100m inactive=60s use_temp_path=off;
+#
+#   # WebP negotiation: ".webp" when the browser accepts it, else empty, so
+#   # try_files $uri$webp_suffix falls back to the original file.
+#   map $http_accept $webp_suffix {
+#       default        "";
+#       "~*image/webp" ".webp";
+#   }

@@ -7,6 +7,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { DemoModeService } from '../../admin/services/demo-mode.service';
 import { ContentService } from '../../shared/services/content.service';
+import { loadLeaflet } from '../../shared/services/leaflet-loader';
 import { BookingsService } from '../../admin/services/bookings.service';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
 
@@ -346,16 +347,17 @@ export class ContactComponent implements OnInit, AfterViewInit {
     return icons[platform] || icons['Instagram'];
   }
 
-  private initMap(): void {
-    // This initializes the Leaflet map
-    // The actual implementation would require Leaflet library
-    // For now, we'll create a placeholder
+  private async initMap(): Promise<void> {
     const mapEl = document.getElementById('nvMap');
     if (!mapEl) return;
 
-    // Check if Leaflet is available
-    if (typeof (window as any).L === 'undefined') {
-      // Leaflet not loaded, create a simple placeholder
+    // Leaflet is fetched on demand — it is no longer a render-blocking
+    // script in index.html, so it costs nothing on pages without a map.
+    let L: any = null;
+    try { L = await loadLeaflet(); } catch { L = null; }
+
+    if (!L) {
+      // Leaflet unavailable, show a simple placeholder
       mapEl.style.backgroundColor = '#EBE5DB';
       mapEl.style.display = 'flex';
       mapEl.style.alignItems = 'center';
@@ -367,8 +369,7 @@ export class ContactComponent implements OnInit, AfterViewInit {
     // Use backend branches if available, otherwise fall back to hardcoded
     const branchesData = this.pageContent.branches || this.branches;
 
-    // Initialize Leaflet map (if library is available)
-    const L = (window as any).L;
+    // Initialize Leaflet map
     const map = L.map(mapEl, { scrollWheelZoom: false, zoomControl: true }).setView([30.6, 31.0], 7);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

@@ -8,6 +8,8 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { CartFlyoutComponent } from '../../shared/components/cart-flyout/cart-flyout.component';
 import { ContentService } from '../../shared/services/content.service';
 import { BookingsService } from '../../admin/services/bookings.service';
+import { loadLeaflet } from '../../shared/services/leaflet-loader';
+import { runInitSteps } from '../../shared/services/init-scheduler';
 
 @Component({
   selector: 'app-forhim',
@@ -201,22 +203,23 @@ export class ForhimComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (!this.isBrowser) return;
-    // Wait for DOM and external scripts to be ready
-    setTimeout(() => {
-      this.initHeroSlideshow();
-      this.initDoctorsSection();
-      this.initBranchSlider();
-      this.initLeafletMap();
-      this.initReveals();
-      this.initCounters();
-      this.initFAQ();
-      this.initTreatmentFilters();
-      this.initContactForm();
-      this.initBookingLinks();
-      this.initPlayIcons();
-      this.initColorSwap();
-      this.initJotFormWidget();
-    }, 1000);
+    // One step per task, outside Angular, so the page stays scrollable while
+    // it wires itself up (see init-scheduler.ts).
+    runInitSteps(this.zone, [
+      { name: 'initHeroSlideshow', run: () => this.initHeroSlideshow() },
+      { name: 'initDoctorsSection', run: () => this.initDoctorsSection() },
+      { name: 'initBranchSlider', run: () => this.initBranchSlider() },
+      { name: 'initLeafletMap', run: () => this.initLeafletMap() },
+      { name: 'initReveals', run: () => this.initReveals() },
+      { name: 'initCounters', run: () => this.initCounters() },
+      { name: 'initFAQ', run: () => this.initFAQ() },
+      { name: 'initTreatmentFilters', run: () => this.initTreatmentFilters() },
+      { name: 'initContactForm', run: () => this.initContactForm() },
+      { name: 'initBookingLinks', run: () => this.initBookingLinks() },
+      { name: 'initPlayIcons', run: () => this.initPlayIcons() },
+      { name: 'initColorSwap', run: () => this.initColorSwap() },
+      { name: 'initJotFormWidget', run: () => this.initJotFormWidget() },
+    ], 150);
   }
 
 
@@ -424,11 +427,14 @@ export class ForhimComponent implements OnInit, AfterViewInit {
     showSlide(0);
   }
 
-  private initLeafletMap(): void {
+  private async initLeafletMap(): Promise<void> {
     const el = document.getElementById('nvMap');
-    if (!el || typeof (window as any).L === 'undefined') return;
+    if (!el) return;
 
-    const L = (window as any).L;
+    // Fetched on demand; Leaflet is not in the critical path anymore.
+    let L: any = null;
+    try { L = await loadLeaflet(); } catch { return; }
+    if (!L) return;
 
     // Use branches from pageContent - NO FALLBACK
     const BR = this.pageContent?.map_branches || [];

@@ -7,7 +7,11 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:nouvelage-angular": "node dist/nouvelage-angular/server/server.mjs"
+    "serve:ssr:nouvelage-angular": "node dist/nouvelage-angular/server/server.mjs",
+    "assets:webp": "node scripts/generate-webp.mjs",
+    "assets:fonts": "node scripts/fetch-fonts.js",
+    "build:prod": "ng build --configuration production",
+    "serve:ssr": "node dist/nouvelage-angular/server/server.mjs"
   },
   "private": true,
   "dependencies": {
@@ -21,7 +25,9 @@
     "@angular/platform-server": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@angular/ssr": "^18.2.21",
+    "compression": "^1.8.1",
     "express": "^4.18.2",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"
@@ -30,6 +36,7 @@
     "@angular-devkit/build-angular": "^18.2.21",
     "@angular/cli": "^18.2.21",
     "@angular/compiler-cli": "^18.2.0",
+    "@types/compression": "^1.8.1",
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
