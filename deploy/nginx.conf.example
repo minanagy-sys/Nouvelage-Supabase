@@ -64,8 +64,12 @@ server {
     # served instead, otherwise the original is. Nothing in the markup or the
     # database changes — the stored path stays photo.jpg.
     #
-    # "Vary: Accept" is required so caches keep the two variants apart; the
-    # $webp_suffix map it depends on is defined at http{} level (see bottom).
+    # "Vary: Accept" is required so caches keep the two variants apart.
+    #
+    # REQUIRED: $webp_suffix is defined by a map at http{} level (see the
+    # bottom of this file). nginx refuses to start with "unknown webp_suffix
+    # variable" if that map is missing, so add it before reloading — or drop
+    # $webp_suffix from the try_files line to serve the originals only.
     location ~* \.(png|jpe?g)$ {
         expires 30d;
         add_header Cache-Control "public";
