@@ -10,9 +10,17 @@ Field names, types and lengths come from the `doctors` table
 (`backend/src/admin/resources.js`). Example values and the vocabulary counts
 come from real production data: 51 doctor records and 210 before/after cases.
 
-A formatted, shareable copy of this document is published at
-<https://claude.ai/code/artifact/1fdaaabb-51f8-4c11-98e9-beb7c0972c06>.
-This file is authoritative if the two ever differ.
+Three companion files:
+
+* **`docs/openapi/nouvelage-doctors-api.yaml`** — the same contract as OpenAPI
+  3.1. Load it in Swagger, Postman or Insomnia; generate client types or a mock
+  server from it. Authoritative for *shape*; this file is authoritative for
+  *intent*.
+* **`backend/scripts/validate-provider.mjs`** — points at a running provider API
+  and checks every response against that schema, then resolves the ids against
+  each other. Exits non-zero on failure, so it can gate a release.
+* A short hand-over page for the provider, published at
+  <https://claude.ai/code/artifact/1fdaaabb-51f8-4c11-98e9-beb7c0972c06>.
 
 ## 1. Endpoints
 

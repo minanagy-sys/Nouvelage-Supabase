@@ -1,0 +1,758 @@
+openapi: 3.1.0
+info:
+  title: Nouvelage — doctors, cases, treatments and booking
+  version: 3.0.0
+  summary: The contract an external provider implements so the clinic website can read doctors and take bookings.
+  description: |
+    Machine-readable form of `docs/DOCTORS-API-CONTRACT.md`. The prose document is
+    authoritative for intent; this file is authoritative for shape, and is what
+    `backend/scripts/validate-provider.mjs` checks a real response against.
+
+    Two rules the schemas below enforce rather than merely request:
+
+    * **One id identifies a thing everywhere.** Ids match `IdString`; a display
+      name ("Dr. Nourhan Ashraf") fails the pattern, so a name sent where an id
+      belongs is rejected instead of quietly matched.
+    * **Arrays are arrays.** Every list is `type: array`. A JSON-encoded string
+      (`"[\"English\"]"`) fails validation — the single most common way this
+      payload arrives broken.
+
+    Timestamps use `TimestampWithOffset`, which requires `Z` or `±hh:mm`. A bare
+    local time is rejected because an appointment without an offset gets booked
+    in the wrong hour.
+  contact:
+    name: Nouvelage Aesthetic Clinics
+    url: https://www.nouvelage.clinic
+
+servers:
+  - url: https://api.example.com/v1
+    description: Provider base URL — replace with the real one.
+
+tags:
+  - name: doctors
+    description: Doctor profiles as rendered on /doctors/{slug}.
+  - name: cases
+    description: Before / after cases, filtered by doctor or by treatment.
+  - name: treatments
+    description: The treatment catalogue. Feeds both the profile list and the booking dropdown.
+  - name: booking
+    description: Availability, holds and confirmed appointments.
+
+paths:
+  /doctors:
+    get:
+      tags: [doctors]
+      operationId: listDoctors
+      summary: All active doctors, in display order
+      description: |
+        Active records only, ordered by `order_index` ascending. Full objects, not
+        summaries — the team page renders qualifications and ratings from this list.
+        Inactive doctors must be excluded, not flagged.
+      responses:
+        '200':
+          description: The doctor list.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheableContent' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [doctors]
+                properties:
+                  doctors:
+                    type: array
+                    items: { $ref: '#/components/schemas/Doctor' }
+
+  /doctors/{idOrSlug}:
+    get:
+      tags: [doctors]
+      operationId: getDoctor
+      summary: One doctor by id or slug
+      parameters:
+        - name: idOrSlug
+          in: path
+          required: true
+          description: Accepts either the `id` or the `slug` in the same segment.
+          schema: { $ref: '#/components/schemas/IdOrSlug' }
+      responses:
+        '200':
+          description: The doctor.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheableContent' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [doctor]
+                properties:
+                  doctor: { $ref: '#/components/schemas/Doctor' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cases:
+    get:
+      tags: [cases]
+      operationId: listCases
+      summary: Before / after cases
+      description: |
+        Both filters must work, separately and together. The doctor profile gallery
+        asks by `doctor_id`; the before / after gallery inside a service popup asks
+        by `treatment_id`, so it shows work of the treatment being read about.
+      parameters:
+        - name: doctor_id
+          in: query
+          schema: { $ref: '#/components/schemas/IdString' }
+        - name: treatment_id
+          in: query
+          schema: { $ref: '#/components/schemas/IdString' }
+      responses:
+        '200':
+          description: Matching cases.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheableContent' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [cases]
+                properties:
+                  cases:
+                    type: array
+                    items: { $ref: '#/components/schemas/Case' }
+
+  /treatments:
+    get:
+      tags: [treatments]
+      operationId: listTreatments
+      summary: Treatment catalogue
+      description: |
+        The profile's treatment list and the booking form's dropdown make this exact
+        request with the same `doctor_id`, so the two can never disagree. Inactive
+        treatments must not be returned at all.
+      parameters:
+        - name: doctor_id
+          in: query
+          description: Restrict to treatments this doctor performs.
+          schema: { $ref: '#/components/schemas/IdString' }
+        - name: branch_id
+          in: query
+          description: Restrict to treatments offered at this branch.
+          schema: { $ref: '#/components/schemas/IdString' }
+      responses:
+        '200':
+          description: Matching treatments.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheableContent' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [treatments]
+                properties:
+                  treatments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Treatment' }
+
+  /doctors/{id}/availability:
+    get:
+      tags: [booking]
+      operationId: getAvailability
+      summary: Bookable slots for a doctor, treatment and branch
+      description: |
+        All three ids are required, so the answer is specific to this doctor, this
+        treatment, at this branch: slot length comes from the treatment's
+        `duration_minutes`, working hours from that doctor's schedule at that branch.
+
+        Return **free slots only**. Listing taken appointments leaks how busy a
+        clinic is and when a specific patient attends. Every date in range appears
+        in `days`, including `full`, `closed` and `holiday` ones, so the picker can
+        grey them out rather than hide them.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/IdString' }
+        - name: treatment_id
+          in: query
+          required: true
+          description: Decides slot length. Availability without it is meaningless.
+          schema: { $ref: '#/components/schemas/IdString' }
+        - name: branch_id
+          in: query
+          required: true
+          description: A doctor works different days at different branches.
+          schema: { $ref: '#/components/schemas/IdString' }
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date, examples: ['2026-04-12'] }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date, examples: ['2026-04-14'] }
+      responses:
+        '200':
+          description: Availability for the requested range.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/NeverCache' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Availability' }
+        '400':
+          description: Range too wide, or a missing / malformed id. Say which in the message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /holds:
+    post:
+      tags: [booking]
+      operationId: createHold
+      summary: Reserve a slot while the visitor fills the form
+      description: |
+        Called the moment a time is picked, before the visitor types anything, so the
+        slot cannot be taken underneath them — and is released automatically if they
+        abandon the form.
+      security:
+        - providerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HoldRequest' }
+      responses:
+        '201':
+          description: Slot held.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/NeverCache' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [hold]
+                properties:
+                  hold: { $ref: '#/components/schemas/Hold' }
+        '409':
+          description: The slot was taken while the page was open. The form refetches availability and asks again.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                taken:
+                  value: { error: 'That time was just taken' }
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /bookings:
+    post:
+      tags: [booking]
+      operationId: createBooking
+      summary: Confirm a held slot into an appointment
+      security:
+        - providerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingRequest' }
+      responses:
+        '201':
+          description: Appointment created.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/NeverCache' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [booking]
+                properties:
+                  booking: { $ref: '#/components/schemas/Booking' }
+        '200':
+          description: |
+            A repeat of a request already seen with this `idempotency_key`. Returns the
+            **same** booking rather than creating a second one — this is what stops a
+            double-tap on a slow connection producing two appointments.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [booking]
+                properties:
+                  booking: { $ref: '#/components/schemas/Booking' }
+        '409':
+          description: The slot is no longer available.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '410':
+          description: The hold expired. The form re-holds the same slot and resubmits.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                expired:
+                  value: { error: 'Your hold expired' }
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /bookings/{id}:
+    get:
+      tags: [booking]
+      operationId: getBooking
+      summary: One booking, so the thank-you page can be reloaded
+      security:
+        - providerApiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/IdString' }
+      responses:
+        '200':
+          description: The booking.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/NeverCache' }
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [booking]
+                properties:
+                  booking: { $ref: '#/components/schemas/Booking' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    providerApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: Shared secret for the two write endpoints. Read endpoints are public.
+
+  headers:
+    ETag:
+      description: Content version, so the site can revalidate cheaply.
+      schema: { type: string }
+    CacheableContent:
+      description: |
+        Content may be cached. The site caches these reads for 60 seconds, so the API
+        sees roughly one request per minute per list regardless of traffic.
+      schema: { type: string, examples: ['public, max-age=60'] }
+    NeverCache:
+      description: |
+        Must be `no-store`. A minute-old slot list produces double bookings.
+      schema: { type: string, const: 'no-store' }
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema: { type: integer, minimum: 1 }
+
+  responses:
+    NotFound:
+      description: No such record, or it is inactive.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          examples:
+            doctor:
+              value: { error: 'Doctor not found' }
+    Unprocessable:
+      description: The body failed validation. Name the field in the message.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limited.
+      headers:
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    IdString:
+      type: string
+      minLength: 3
+      maxLength: 64
+      # No spaces, no dots: a display name cannot pass as an id.
+      pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$'
+      description: |
+        An opaque stable identifier. Whatever format you use — UUID, prefixed key —
+        it must never contain spaces or punctuation beyond `-` and `_`, so that a
+        display name sent where an id belongs is rejected rather than silently
+        matched by name.
+      examples: ['b7f1c8e2-4a2c-4f19-9d3e-1a5c7b904e11', 'tr_filler_ha', 'br_citystars']
+
+    Slug:
+      type: string
+      minLength: 2
+      maxLength: 200
+      pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+      description: Lowercase, hyphenated. Appears in public URLs, so changing one breaks live links.
+      examples: ['randa-el-aguizy']
+
+    IdOrSlug:
+      type: string
+      minLength: 2
+      maxLength: 200
+      pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{1,199}$'
+
+    TimestampWithOffset:
+      type: string
+      format: date-time
+      # Requires Z or ±hh:mm. A bare local time would be booked in the wrong hour.
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$'
+      examples: ['2026-04-12T14:30:00+03:00']
+
+    ImagePath:
+      type: string
+      maxLength: 500
+      # Root-relative path or absolute https URL. Rejects data: URIs outright.
+      pattern: '^(?:/[^\s]*|https://[^\s]+)$'
+      description: |
+        A root-relative path or an absolute https URL — never image bytes. Base64 and
+        `data:` URIs are rejected: the site was rebuilt specifically to keep image
+        bytes out of the data layer.
+      examples: ['/assets/img/doctors/randa-el-aguizy.webp']
+
+    StringList:
+      type: array
+      items: { type: string }
+      description: A real JSON array. A JSON-encoded string fails validation.
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: A message a person can act on. No stack traces, no internals.
+
+    Branch:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      description: |
+        An object, not a name string. The booking form needs `id` to ask for
+        availability; a bare "City Stars" cannot be used to make that call.
+      properties:
+        id: { $ref: '#/components/schemas/IdString' }
+        slug: { $ref: '#/components/schemas/Slug' }
+        name: { type: string, maxLength: 200, examples: ['Citystars — Phase 2'] }
+
+    GalleryItem:
+      type: object
+      additionalProperties: false
+      required: [before, after, description, procedure]
+      properties:
+        before: { $ref: '#/components/schemas/ImagePath' }
+        after: { $ref: '#/components/schemas/ImagePath' }
+        description: { type: string, examples: ['Fillers full face'] }
+        procedure: { type: string, examples: ['Filler (HA)'] }
+        category:
+          type: string
+          enum: [face, skin, hair, body, laser]
+
+    DoctorTreatment:
+      type: object
+      additionalProperties: false
+      required: [name]
+      description: Rendered in the profile's Treatments block. No column stores this today — see contract decision 1.
+      properties:
+        name: { type: string, maxLength: 200 }
+        description: { type: string }
+
+    Doctor:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slug
+        - name
+        - sub_specialties
+        - qualifications
+        - certificates
+        - experience
+        - rating
+        - languages
+        - treatment_ids
+        - services
+        - branches
+        - available_days
+        - profile_image
+        - before_after_gallery
+        - featured
+        - is_active
+        - order_index
+        - created_at
+        - updated_at
+      properties:
+        id: { $ref: '#/components/schemas/IdString' }
+        slug: { $ref: '#/components/schemas/Slug' }
+        name: { type: string, minLength: 2, maxLength: 200, examples: ['Dr. Randa El Aguizy'] }
+        title: { type: [string, 'null'], maxLength: 50, examples: ['Dr.'] }
+        specialization: { type: [string, 'null'], maxLength: 200, examples: ['Derma Consultant'] }
+        sub_specialties: { $ref: '#/components/schemas/StringList' }
+        gender: { type: [string, 'null'], enum: [male, female, null] }
+        qualifications: { $ref: '#/components/schemas/StringList' }
+        certificates: { $ref: '#/components/schemas/StringList' }
+        experience:
+          type: integer
+          minimum: 0
+          maximum: 70
+          description: Whole years. Drives the "YEARS EXP." figure on every card.
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: 0–5. Drives the star display; the page falls back to a hardcoded 4.9 when absent.
+        languages: { $ref: '#/components/schemas/StringList' }
+        treatment_ids:
+          type: array
+          items: { $ref: '#/components/schemas/IdString' }
+          description: |
+            The canonical link — the treatment ids this doctor performs, as returned by
+            `/treatments`. Nothing else decides which treatments belong to a doctor.
+        services:
+          allOf: [{ $ref: '#/components/schemas/StringList' }]
+          description: |
+            Derived, never authored: the display names of `treatment_ids`, in the same
+            order. Names only — a mix of names and ids here is what forces the current
+            site to guess with a regular expression.
+        branches:
+          type: array
+          items: { $ref: '#/components/schemas/Branch' }
+        available_days:
+          allOf: [{ $ref: '#/components/schemas/StringList' }]
+          description: |
+            Coarse day names for display only, derived from the schedule. Not the
+            booking calendar — that is `/doctors/{id}/availability`.
+        bio: { type: [string, 'null'], description: Short tagline under the name. }
+        long_bio: { type: [string, 'null'], description: 'Full biography. Plain text with newlines, not HTML.' }
+        philosophy: { type: [string, 'null'], description: Approach to care; renders the Consultations card. }
+        profile_image: { $ref: '#/components/schemas/ImagePath' }
+        before_after_gallery:
+          type: array
+          items: { $ref: '#/components/schemas/GalleryItem' }
+        treatments:
+          type: array
+          items: { $ref: '#/components/schemas/DoctorTreatment' }
+        expertise: { $ref: '#/components/schemas/StringList' }
+        booking_link: { type: [string, 'null'], maxLength: 500 }
+        featured: { type: boolean }
+        is_active:
+          const: true
+          description: Public responses carry active records only, so this is always true here.
+        order_index: { type: integer, minimum: 0 }
+        meta_title: { type: [string, 'null'], maxLength: 200 }
+        meta_description: { type: [string, 'null'] }
+        meta_keywords: { type: [string, 'null'] }
+        instagram_url: { type: [string, 'null'], maxLength: 200 }
+        facebook_url: { type: [string, 'null'], maxLength: 200 }
+        linkedin_url: { type: [string, 'null'], maxLength: 200 }
+        created_at: { $ref: '#/components/schemas/TimestampWithOffset' }
+        updated_at: { $ref: '#/components/schemas/TimestampWithOffset' }
+
+    Case:
+      type: object
+      additionalProperties: false
+      required: [id, doctor_id, doctor_slug, treatment_id, bodypart, material, effect, category, desc, before, after]
+      properties:
+        id: { $ref: '#/components/schemas/IdString' }
+        doctor_id: { $ref: '#/components/schemas/IdString' }
+        doctor_slug: { $ref: '#/components/schemas/Slug' }
+        treatment_id:
+          $ref: '#/components/schemas/IdString'
+          description: |
+            What was actually done. This is what lets a service's gallery show only
+            cases of that treatment instead of everything its doctors have ever done.
+        treatment_ids:
+          type: array
+          items: { $ref: '#/components/schemas/IdString' }
+          description: For a combined case — fillers and Botox in one sitting. Include `treatment_id` among them.
+        bodypart: { type: string, examples: ['Lips'] }
+        material: { type: string, examples: ['Filler (HA)'] }
+        effect: { type: string, examples: ['Volume'], description: The gallery card title. }
+        category:
+          type: string
+          enum: [face, skin, hair, body, laser]
+          description: Drives the gallery's filter buttons; absent today, so every card reads "SKIN".
+        desc: { type: string, examples: ['Fillers full face'] }
+        before:
+          oneOf: [{ $ref: '#/components/schemas/ImagePath' }, { type: 'null' }]
+          description: Nullable — some existing rows have no image. The site skips a pair missing a side.
+        after:
+          oneOf: [{ $ref: '#/components/schemas/ImagePath' }, { type: 'null' }]
+        date: { oneOf: [{ $ref: '#/components/schemas/TimestampWithOffset' }, { type: 'null' }] }
+
+    Treatment:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, duration_minutes, doctor_ids, branch_ids, is_active]
+      properties:
+        id: { $ref: '#/components/schemas/IdString' }
+        slug: { $ref: '#/components/schemas/Slug' }
+        name: { type: string, minLength: 2, maxLength: 200, examples: ['Dermal Fillers'] }
+        category: { type: [string, 'null'], examples: ['Face'] }
+        duration_minutes:
+          type: integer
+          minimum: 5
+          maximum: 600
+          description: |
+            An integer, in minutes. The site's own `duration` is free text ("45 min",
+            "1 hour") and cannot be used to compute an end time.
+        buffer_minutes: { type: integer, minimum: 0, maximum: 240, description: Cleaning / turnaround after the appointment. }
+        price: { type: [number, 'null'], minimum: 0, description: Numeric. Null when price is on consultation. }
+        currency: { type: [string, 'null'], pattern: '^[A-Z]{3}$', examples: ['EGP'] }
+        price_from: { type: boolean, description: True when the price is a starting figure, so the form can show "from". }
+        requires_consultation: { type: boolean, description: True when it cannot be booked directly. }
+        doctor_ids:
+          type: array
+          items: { $ref: '#/components/schemas/IdString' }
+          description: |
+            The same relationship as `doctor.treatment_ids`, seen from this side. Store
+            one edge and generate the other so they cannot disagree.
+        branch_ids:
+          type: array
+          items: { $ref: '#/components/schemas/IdString' }
+        is_active: { const: true }
+
+    Slot:
+      type: object
+      additionalProperties: false
+      required: [slot_id, start, end]
+      properties:
+        slot_id:
+          $ref: '#/components/schemas/IdString'
+          description: Opaque token for this slot, passed straight back when holding and booking.
+        start: { $ref: '#/components/schemas/TimestampWithOffset' }
+        end:
+          $ref: '#/components/schemas/TimestampWithOffset'
+          description: Start plus duration plus buffer, computed by you — the site never calculates it.
+
+    AvailabilityDay:
+      type: object
+      additionalProperties: false
+      required: [date, status, slots]
+      properties:
+        date: { type: string, format: date, examples: ['2026-04-12'] }
+        status:
+          type: string
+          enum: [open, full, closed, holiday]
+          description: Every date in range appears, so the picker can grey out the unbookable ones.
+        note: { type: [string, 'null'], examples: ['Sham El-Nessim'] }
+        slots:
+          type: array
+          items: { $ref: '#/components/schemas/Slot' }
+          description: Free slots only. Empty for a full, closed or holiday day.
+
+    Availability:
+      type: object
+      additionalProperties: false
+      required: [timezone, generated_at, slot_minutes, min_notice_minutes, days]
+      properties:
+        timezone:
+          type: string
+          pattern: '^[A-Za-z]+/[A-Za-z_+-]+$'
+          description: |
+            An IANA name such as `Africa/Cairo`, not an offset. Egypt observes DST, so
+            a fixed +02:00 breaks twice a year.
+          examples: ['Africa/Cairo']
+        generated_at: { $ref: '#/components/schemas/TimestampWithOffset' }
+        slot_minutes: { type: integer, minimum: 5, maximum: 120 }
+        min_notice_minutes:
+          type: integer
+          minimum: 0
+          description: How soon an appointment may start, so the form cannot offer a slot ten minutes from now.
+        days:
+          type: array
+          items: { $ref: '#/components/schemas/AvailabilityDay' }
+
+    HoldRequest:
+      type: object
+      additionalProperties: false
+      required: [doctor_id, treatment_id, branch_id, slot_id]
+      properties:
+        doctor_id: { $ref: '#/components/schemas/IdString' }
+        treatment_id: { $ref: '#/components/schemas/IdString' }
+        branch_id: { $ref: '#/components/schemas/IdString' }
+        slot_id: { $ref: '#/components/schemas/IdString' }
+
+    Hold:
+      type: object
+      additionalProperties: false
+      required: [hold_id, expires_at]
+      properties:
+        hold_id: { $ref: '#/components/schemas/IdString' }
+        expires_at:
+          $ref: '#/components/schemas/TimestampWithOffset'
+          description: About ten minutes out — long enough to fill a form, short enough not to block the slot.
+
+    BookingRequest:
+      type: object
+      additionalProperties: false
+      required: [hold_id, doctor_id, treatment_id, branch_id, slot_id, name, phone, source, idempotency_key]
+      properties:
+        hold_id: { $ref: '#/components/schemas/IdString' }
+        doctor_id: { $ref: '#/components/schemas/IdString' }
+        treatment_id: { $ref: '#/components/schemas/IdString' }
+        branch_id: { $ref: '#/components/schemas/IdString' }
+        slot_id: { $ref: '#/components/schemas/IdString' }
+        name: { type: string, minLength: 2, maxLength: 200 }
+        phone:
+          type: string
+          minLength: 6
+          maxLength: 50
+          description: The clinic's primary contact channel. Validate the country format and echo it back normalised.
+        email: { type: [string, 'null'], format: email, maxLength: 200, description: Many patients book with a phone only. }
+        birthday: { type: [string, 'null'], format: date }
+        message: { type: [string, 'null'], maxLength: 2000 }
+        source: { type: string, maxLength: 100, examples: ['website-doctor-page'] }
+        idempotency_key:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: |
+            One per submission. A repeat with the same key returns the same booking
+            instead of a second one — what stops a double-tap creating two appointments.
+
+    Booking:
+      type: object
+      additionalProperties: false
+      required: [id, booking_reference, status, appointment_start, appointment_end, doctor_name, treatment_name, branch_name]
+      properties:
+        id: { $ref: '#/components/schemas/IdString' }
+        booking_reference:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Short and human — the patient quotes it on the phone.
+          examples: ['NV-4821']
+        status:
+          type: string
+          enum: [confirmed, pending, cancelled]
+          description: '`pending` when the clinic approves manually — see contract decision 5.'
+        appointment_start: { $ref: '#/components/schemas/TimestampWithOffset' }
+        appointment_end: { $ref: '#/components/schemas/TimestampWithOffset' }
+        doctor_name: { type: string }
+        treatment_name: { type: string }
+        branch_name: { type: string }

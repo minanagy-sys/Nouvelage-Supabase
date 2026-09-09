@@ -19,9 +19,10 @@ nouvelage/
 ├── frontend/   Angular app (public site + admin dashboard)
 ├── backend/    Express 5 API + MySQL schema, migrations, ops scripts
 │   ├── db/         schema.sql · admin-schema.sql · seed.sql · migrations/
-│   ├── scripts/    setup-db · migrate · create-admin · list-admins · import-legacy · import-media
+│   ├── scripts/    setup-db · migrate · create-admin · list-admins · validate-provider · import-*
 │   └── src/        API source (routes, admin CRUD registry, media pipeline)
 ├── deploy/     docker-compose (MySQL + API) + nginx server block example
+├── docs/       API contract for an external provider + its OpenAPI 3.1 spec
 └── MIGRATION.md  Runbook: moving the live Supabase data into MySQL
 ```
 
@@ -112,6 +113,28 @@ Non-negotiables carried from the security review:
 - bcrypt cost 12; admin accounts re-checked against the database on every request
 - form submitter IPs stored only as salted SHA-256 hashes
 - image bytes never in the database — paths only
+
+## Handing work to an external API provider
+
+`docs/DOCTORS-API-CONTRACT.md` is the contract for a provider serving doctors,
+before/after cases, treatments and bookings. Two files make it testable rather
+than aspirational:
+
+```bash
+# validate the spec itself
+cd backend && node -e "require('@readme/openapi-parser').validate('../docs/openapi/nouvelage-doctors-api.yaml').then(r=>console.log(r.valid))"
+
+# check a provider's live API against it
+node scripts/validate-provider.mjs --base https://their-api.example.com/v1
+node scripts/validate-provider.mjs --fixtures ./samples   # or saved JSON responses
+```
+
+The checker needs `ajv`, `ajv-formats` and `yaml` (`npm i -D ajv ajv-formats yaml`).
+It reports two classes of problem: **shape** (arrays sent as JSON strings, a
+display name where an id belongs, timestamps without a UTC offset, base64 in an
+image field) and **joins** (a case pointing at a doctor that `/doctors` does not
+return, a doctor listing a treatment absent from `/treatments`, the two sides of
+the doctor↔treatment link disagreeing). Non-zero exit on any failure.
 
 ## Migrating the live data
 
