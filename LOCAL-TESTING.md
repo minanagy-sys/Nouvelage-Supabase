@@ -119,5 +119,24 @@ be running.
   what you created in step 1.
 - **API up but pages empty + console CORS errors** — make sure
   `CORS_ORIGINS` includes `http://localhost:4200` exactly.
-- **Login always fails** — re-run create-admin (it also resets the password
-  for an existing email).
+- **`401 Unauthorized` on the dashboard login** — the API is running fine
+  (a dead API gives `status 0` instead); the email and password just don't
+  match a row. The API deliberately won't say which of the two is wrong, so
+  list the accounts that exist:
+
+  ```bash
+  cd backend && npm run list-admins
+  ```
+
+  Sign in with an address exactly as printed. If the one you're typing isn't
+  there — `admin@nouvelage.com` and `admin@nouvelage.clinic` are easy to mix
+  up — create it, or reset the password on an existing account, by running
+  create-admin with that same email:
+
+  ```bash
+  ADMIN_EMAIL=the-address-you-type ADMIN_PASSWORD='min-10-chars' npm run create-admin
+  ```
+
+- **`Too many login attempts — try again later`** — the login endpoint allows
+  10 tries per 15 minutes per IP. Wait it out, or restart the API to clear the
+  counter (it is held in memory).

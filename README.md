@@ -19,7 +19,7 @@ nouvelage/
 ├── frontend/   Angular app (public site + admin dashboard)
 ├── backend/    Express 5 API + MySQL schema, migrations, ops scripts
 │   ├── db/         schema.sql · admin-schema.sql · seed.sql · migrations/
-│   ├── scripts/    setup-db · migrate · create-admin · import-legacy · import-media
+│   ├── scripts/    setup-db · migrate · create-admin · list-admins · import-legacy · import-media
 │   └── src/        API source (routes, admin CRUD registry, media pipeline)
 ├── deploy/     docker-compose (MySQL + API) + nginx server block example
 └── MIGRATION.md  Runbook: moving the live Supabase data into MySQL
@@ -35,6 +35,7 @@ cp .env.example .env          # fill in DB credentials and secrets
 npm install
 npm run setup-db              # create database, apply schema + seed
 ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='min-10-chars' npm run create-admin
+npm run list-admins           # which addresses can sign in (login says 401 for a wrong email)
 npm run dev
 ```
 
