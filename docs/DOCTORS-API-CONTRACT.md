@@ -1,4 +1,4 @@
-# Doctor profile API contract (v2)
+# Doctor profile API contract (v3)
 
 Everything the website reads about a doctor, the before/after cases attached to
 them, and the two things the booking form needs from outside: the treatment list
@@ -23,7 +23,7 @@ Public, unauthenticated, `GET` only. The envelope key matters — the site reads
 |---|---|---|
 | `GET /doctors` | `{ "doctors": [Doctor, …] }` | Only `is_active` records, ordered by `order_index` ASC. Full objects — the team page renders qualifications and ratings from this list. |
 | `GET /doctors/{idOrSlug}` | `{ "doctor": Doctor }` | Accepts the `id` **or** the `slug` in the same segment. `404` + `{"error":"Doctor not found"}` when missing or inactive. |
-| `GET /cases` | `{ "cases": [Case, …] }` | All published cases; support `?doctor_id=` to filter. Does not exist yet in any form. |
+| `GET /cases` | `{ "cases": [Case, …] }` | Support `?doctor_id=`, `?treatment_id=`, and both together — the profile filters by doctor, the service modal by treatment. Does not exist yet in any form. |
 | `GET /treatments` | `{ "treatments": [Treatment, …] }` | Feeds the booking form's treatment list. Support `?doctor_id=` and `?branch_id=`. See §7. |
 | `GET /doctors/{id}/availability` | `{ "timezone": …, "days": [Day, …] }` | Bookable slots. Takes `treatment_id`, `branch_id`, `from`, `to`. Never cached. See §8. |
 | `POST /holds` | `{ "hold": Hold }` | Reserves a slot ~10 min while the visitor fills the form. See §9. |
@@ -76,9 +76,10 @@ changing application code.
 | `experience` | integer | yes | `13` whole years, default `0`. Drives "YEARS EXP." on every card. |
 | `rating` | number | yes | `4.9` (0.00–5.00, 2 dp), default `0`. Drives the star display. |
 | `languages` | string[] | yes | `["English","Arabic"]` |
-| `services` | string[] | yes | `["Botox","Dermal Fillers","Thread Lift"]` — see decision 3. |
-| `branches` | string[] | yes | `["CFC","City Stars","Mall Of Arabia"]` — short labels today, see decision 3. |
-| `available_days` | string[] | yes | Often empty; send `[]`. |
+| `treatment_ids` | string[] | yes | **The canonical link.** Treatment ids this doctor performs — the same ids `/treatments` returns. Nothing else decides which treatments belong to a doctor. |
+| `services` | string[] | yes | **Derived, never authored.** Display names of `treatment_ids`, same order, so the profile can render chips and the count without a second request. Names only — the site currently receives a mix of names and UUIDs here and sniffs which with a regex. |
+| `branches` | object[] | yes | **Objects, not name strings:** `[{"id":"br_citystars","slug":"citystars","name":"Citystars — Phase 2"}]`. The form needs `id` to ask for availability; a bare `"City Stars"` cannot make that call. |
+| `available_days` | string[] | yes | Coarse day names for display only, **derived from the schedule** — never authored separately. Not the booking calendar (§11). |
 
 ### Written content
 
@@ -143,6 +144,8 @@ working unchanged, the flat record is what the treatment pages filter on.
 | `id` | string | yes | `"f707bc244"` |
 | `doctor_id` | string | yes | The doctor's `id`. **Not the name** — see decision 2. |
 | `doctor_slug` | string | yes | So a case links to a profile without a second request. |
+| `treatment_id` | string | yes | **What was actually done**, as a treatment id. This is what lets a service's gallery show only cases of *that* treatment. Without it the gallery filters by doctor alone, which is why a doctor's Botox case currently appears under a laser service. |
+| `treatment_ids` | string[] | no | For a combined case (fillers *and* Botox in one sitting). Include `treatment_id` among them. |
 | `bodypart` | string | yes | `"Lips"`. Filter facet — vocabulary in §5. |
 | `material` | string | yes | `"Filler (HA)"`. What was used. |
 | `effect` | string | yes | `"Volume"`. What it achieved; the gallery card title. |
@@ -208,11 +211,13 @@ the data layer.
    `doctor_id` and `doctor_slug`, and that the import maps all 16 existing
    names onto real records.
 
-3. **Are `services` and `branches` free text or references?** They are loose
-   strings today — `"City Stars"`, `"Madinty The Strip"` (misspelled) — which
-   don't match the full branch names used elsewhere. Either keep free text and
-   accept the mismatch, or return `branch_ids` / `service_ids` alongside the
-   labels so a doctor links to a real branch and treatment page.
+3. **Mapping today's loose strings onto ids.** The chain (§8) requires ids, so
+   this is no longer optional — the question is only how the existing text
+   becomes them. Branches are stored as `"City Stars"`, `"Madinty The Strip"`
+   (misspelled), and `doctor.services` holds a mix of names and UUIDs. Send us
+   the branch list with ids, and confirm how the doctor → treatment links get
+   seeded: from `doctor.services`, from the `specialist_doctor_ids` already on
+   each service, or reviewed by the clinic.
 
 4. **Who hosts the images?** The paths above point at the clinic's own server.
    If the API hosts them instead, every path becomes an absolute URL on that
@@ -295,6 +300,70 @@ GET /cases?doctor_id=b7f1c8e2-4a2c-4f19-9d3e-1a5c7b904e11
 }
 ```
 
+## 8. The chain: one id from profile to booked appointment
+
+Every screen after the first depends on an id handed to it by the one before.
+Two rules make it hold: **one id identifies a thing everywhere**, and **one
+endpoint owns each fact**. Nothing is matched by name; nothing is stored twice.
+
+1. **Visitor opens a profile** — `GET /doctors/randa-el-aguizy`.
+   The slug is in the URL; the response carries the doctor's `id`. From here on
+   that id, never the name, identifies this doctor.
+   → carries `doctor.id`, `doctor.treatment_ids`, `doctor.branches[].id`
+
+2. **Profile lists this doctor's treatments** — `GET /treatments?doctor_id={id}`.
+   The "Treatments" block renders this response. Not a name lookup, not a second
+   copy embedded in the doctor record.
+   → carries `treatment.id`, `name`, `duration_minutes`, `price`
+
+3. **A service's gallery shows cases of that treatment** —
+   `GET /cases?treatment_id={id}`. The before/after gallery inside a service
+   popup asks by *treatment*, so it shows work of the treatment being read
+   about. Add `&doctor_id=` to narrow to one specialist; each card still links
+   back to the doctor via `doctor_slug`.
+   → carries `case.before`/`after`, `effect`, `bodypart`, `doctor_slug`
+
+4. **Booking form fills its treatment dropdown** — *the same call as step 2*,
+   identical doctor id, so the options can never differ from what the profile
+   showed. Label `treatment.name`, value `treatment.id`.
+   → visitor picks `treatment_id`
+
+5. **Branch dropdown** — from `doctor.branches[]`; label `.name`, value `.id`.
+   If a treatment is offered at fewer branches than the doctor works at,
+   intersect with `treatment.branch_ids`.
+   → visitor picks `branch_id`
+
+6. **Dates and times** —
+   `GET /doctors/{id}/availability?treatment_id=&branch_id=&from=&to=`.
+   All three ids go in, so the answer is specific to *this doctor, this
+   treatment, at this branch*: slot length from the treatment's
+   `duration_minutes`, hours from that doctor's schedule at that branch. The
+   picker greys out `full`/`closed`/`holiday`; the time dropdown lists that
+   day's `slots[]`. Refetched on any change of treatment, branch or date.
+   → visitor picks `slot_id`
+
+7. **Hold it** — `POST /holds` with the four ids, the moment a time is picked
+   and before any typing. Returns a `hold_id` good ~10 minutes.
+   → carries `hold_id`, `expires_at`
+
+8. **Confirm** — `POST /bookings` with the same ids plus `hold_id`, the
+   patient's details and an `idempotency_key`.
+   → carries `booking_reference`, `appointment_start`, `appointment_end`
+
+### The five rules that keep it single-source
+
+| Fact | Owned by | Never |
+|---|---|---|
+| Which doctor | `doctor.id` | Matched by `name`. Names get corrected; ids do not. |
+| Which treatments a doctor performs | `doctor.treatment_ids` ⇄ `treatment.doctor_ids` | Two hand-maintained lists. Store one edge, generate the other. |
+| Treatment name, price, duration | `GET /treatments` | Duplicated into the doctor record, or hardcoded in the form. |
+| What a before/after case shows | `case.doctor_id` + `case.treatment_id` | Inferred from the free-text `material`. A case belongs to a doctor *and* a treatment. |
+| When a doctor is free | `GET …/availability` | Derived on the website from `available_days` or opening hours. The site displays slots; it never calculates them. |
+
+**Why the website must not compute availability.** The moment it does, two
+systems believe they know the schedule, and the one the visitor sees is always
+the stale one. Ask, render, book — that is the whole responsibility of the form.
+
 ## 9. The doctor page, element by element
 
 Every visible element on a doctor's profile and the field that feeds it. A
@@ -368,7 +437,7 @@ be offered. Today the list is hardcoded in the page.
 | `currency` | string | no | `"EGP"` |
 | `price_from` | boolean | no | True when the price is a starting figure. |
 | `requires_consultation` | boolean | no | True when it cannot be booked directly. |
-| `doctor_ids` | string[] | yes | Which doctors perform it — lets the form filter both ways. |
+| `doctor_ids` | string[] | yes | Which doctors perform it — the same relationship as `doctor.treatment_ids` seen from this side. Store one edge, generate the other so they cannot disagree. |
 | `branch_ids` | string[] | yes | Where it is offered; some devices exist at one branch only. |
 | `is_active` | boolean | yes | Inactive treatments must not be returned at all. |
 
