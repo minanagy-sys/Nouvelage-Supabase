@@ -1,8 +1,9 @@
-# Doctor profile API contract (v1)
+# Doctor profile API contract (v2)
 
-Everything the website reads about a doctor, and about the before/after cases
-attached to them. An external API that returns exactly these objects can
-replace `/api/content/doctors` with no change to the pages.
+Everything the website reads about a doctor, the before/after cases attached to
+them, and the two things the booking form needs from outside: the treatment list
+and the doctor's real availability. An external API that returns exactly these
+objects can replace `/api/content/doctors` with no change to the pages.
 
 Field names, types and lengths come from the `doctors` table
 (`backend/db/schema.sql`) and the writable field registry
@@ -23,6 +24,10 @@ Public, unauthenticated, `GET` only. The envelope key matters — the site reads
 | `GET /doctors` | `{ "doctors": [Doctor, …] }` | Only `is_active` records, ordered by `order_index` ASC. Full objects — the team page renders qualifications and ratings from this list. |
 | `GET /doctors/{idOrSlug}` | `{ "doctor": Doctor }` | Accepts the `id` **or** the `slug` in the same segment. `404` + `{"error":"Doctor not found"}` when missing or inactive. |
 | `GET /cases` | `{ "cases": [Case, …] }` | All published cases; support `?doctor_id=` to filter. Does not exist yet in any form. |
+| `GET /treatments` | `{ "treatments": [Treatment, …] }` | Feeds the booking form's treatment list. Support `?doctor_id=` and `?branch_id=`. See §7. |
+| `GET /doctors/{id}/availability` | `{ "timezone": …, "days": [Day, …] }` | Bookable slots. Takes `treatment_id`, `branch_id`, `from`, `to`. Never cached. See §8. |
+| `POST /holds` | `{ "hold": Hold }` | Reserves a slot ~10 min while the visitor fills the form. See §9. |
+| `POST /bookings` | `{ "booking": Booking }` | Confirms the hold into an appointment. Idempotent. See §9. |
 
 ## 2. Conventions
 
@@ -35,11 +40,14 @@ changing application code.
   arrives broken.
 - **Never `null` for an array** — send `[]`. The pages iterate without null guards.
 - **Numbers as numbers** (`13`, `4.9`), **booleans as booleans** (not `1`/`0`).
-- **ISO 8601 UTC timestamps** (`2026-03-14T09:41:00Z`).
+- **ISO 8601 timestamps including the offset** (`2026-04-12T14:30:00+03:00`).
+  Critical for appointments — a bare local time gets booked in the wrong hour.
 - **Errors**: `{ "error": "human readable message" }` with a real status code,
   no internals in the body.
-- **Caching**: send `ETag` and `Cache-Control`. The site caches content reads
-  for 60s, so the API sees ~1 request/minute per list regardless of traffic.
+- **Caching**: content endpoints send `ETag` and `Cache-Control` (the site
+  caches them 60s, so the API sees ~1 request/minute per list regardless of
+  traffic). Availability and bookings send `Cache-Control: no-store` — a
+  minute-old slot list produces double bookings.
 - **CORS** for the clinic origins; no credentials needed.
 - **No pagination by default.** 51 doctors and 210 cases fit one response. If
   paging is added, keep the unpaginated default — the team page needs all
@@ -105,6 +113,14 @@ changing application code.
 
 ## 4. Before/after cases
 
+**Where today's 210 cases come from.** They are not in the database and were
+never entered through the dashboard. They sit in a file shipped with the
+website, `frontend/src/assets/cases-data.json` (75 KB), with 572 image files
+(15 MB) under `frontend/public/assets/img/media-library/doctors/<slug>/cases/`,
+covering 15 doctors. They arrived with the original site build. That is why
+nobody can edit or remove them from the dashboard, and why moving them into a
+real API is worth doing.
+
 Two shapes exist. Implement **both**: the nested gallery keeps the profile page
 working unchanged, the flat record is what the treatment pages filter on.
 
@@ -129,7 +145,8 @@ working unchanged, the flat record is what the treatment pages filter on.
 | `doctor_slug` | string | yes | So a case links to a profile without a second request. |
 | `bodypart` | string | yes | `"Lips"`. Filter facet — vocabulary in §5. |
 | `material` | string | yes | `"Filler (HA)"`. What was used. |
-| `effect` | string | yes | `"Volume"`. What it achieved. |
+| `effect` | string | yes | `"Volume"`. What it achieved; the gallery card title. |
+| `category` | string | yes | Drives the gallery filter buttons. Absent today, so every card reads "SKIN". |
 | `desc` | string | yes | `"skin booster"`. Caption under the pair. |
 | `before` | string\|null | yes | Some existing rows are empty; nullable, and the site skips incomplete pairs. |
 | `after` | string\|null | yes | As above. |
@@ -277,3 +294,170 @@ GET /cases?doctor_id=b7f1c8e2-4a2c-4f19-9d3e-1a5c7b904e11
   ]
 }
 ```
+
+## 9. The doctor page, element by element
+
+Every visible element on a doctor's profile and the field that feeds it. A
+fallback is a placeholder, not content — treat "if empty" as a warning.
+
+### Hero
+
+| Element | Field | If empty |
+|---|---|---|
+| Portrait | `profile_image` | Broken image — always send one. |
+| Specialisation over portrait | `specialization` | Blank strip. |
+| Name (h1) | `name` | Renders empty; required. |
+| Degree line | `specialization` | Blank. |
+| Tagline | `bio` | Falls back to `long_bio`, then a generic sentence. |
+| Stat 1 "YEARS EXP." | `experience` | Shows `0+`. |
+| Stat 2 rating | `rating` | Shows `★4.9` — a hardcoded placeholder. Send a real value. |
+| Stat 3 treatment count | `services.length` | Shows 0. |
+| "Available at" branch chips | `branches` | Whole row hidden. |
+| Book button | `booking_link` *(missing)* | See decision 1. |
+
+### Body
+
+| Element | Field | If empty |
+|---|---|---|
+| "About {firstName}" paragraph | `long_bio` | Empty block; heading still renders. |
+| Treatments list (name + description) | `treatments[]` *(missing)* | Falls back to `services[]` with a generic description. Decision 1. |
+| Certificates list | `certificates` | Block hidden. |
+| Languages chips | `languages` | Block hidden. |
+| Consultations card | `philosophy` | Block hidden. |
+
+### Results gallery
+
+| Element | Field | Notes |
+|---|---|---|
+| "Real results from {firstName}" | `name` | First name derived from `name`. |
+| Category filter buttons | `case.category` | Built from the doctor's cases; hidden when none. |
+| Before image + label | `case.before` | Card skipped if either side missing. |
+| After image + label | `case.after` | As above. |
+| "Case n · CATEGORY" | `case.category` | Falls back to the literal `SKIN`. |
+| Card title | `case.effect` | Falls back to `case.bodypart`. |
+| Card subtitle | `case.bodypart` | Hidden when absent. |
+| Product chips | `case.material` | Hidden when absent. |
+| "See More Cases" | — | Appears past four cases. |
+
+### Booking block
+
+| Element | Fed by | Notes |
+|---|---|---|
+| "Book with {name}" | `name` | — |
+| Treatment select | `GET /treatments?doctor_id=` | §7. Hardcoded today. |
+| Branch select | `doctor.branches` | Should become branch ids — decision 3. |
+| Date picker | `GET /doctors/{id}/availability` | §8. Only dates with a free slot selectable. |
+| Time select | `availability.days[].slots[]` | §8. Refetched on treatment/branch/date change. |
+| Name / phone / email / message | visitor input | Posted in §9. |
+| Submit | `POST /holds` → `POST /bookings` | §9. |
+
+## 10. Treatments for the booking form
+
+The treatment decides how long the appointment is, and therefore which slots can
+be offered. Today the list is hardcoded in the page.
+
+| Field | Type | Req | Notes |
+|---|---|---|---|
+| `id` | string | yes | What `POST /bookings` sends back as `treatment_id`. |
+| `slug` | string | yes | `"laser-hair-removal"` — links the form to the treatment page. |
+| `name` | string | yes | The option label. |
+| `category` | string | no | Groups options: Face · Skin · Hair · Body · Laser. |
+| `duration_minutes` | integer | yes | **An integer, in minutes.** The site's current `duration` is free text ("45 min", "1 hour") and cannot compute an end time. |
+| `buffer_minutes` | integer | no | Cleaning / turnaround after the appointment. |
+| `price` | number\|null | no | Numeric. Null when price is on consultation. |
+| `currency` | string | no | `"EGP"` |
+| `price_from` | boolean | no | True when the price is a starting figure. |
+| `requires_consultation` | boolean | no | True when it cannot be booked directly. |
+| `doctor_ids` | string[] | yes | Which doctors perform it — lets the form filter both ways. |
+| `branch_ids` | string[] | yes | Where it is offered; some devices exist at one branch only. |
+| `is_active` | boolean | yes | Inactive treatments must not be returned at all. |
+
+## 11. Availability and the doctor's schedule
+
+The website must never compute availability itself. It asks for free slots and
+renders exactly what comes back, so the schedule stays in one place and the site
+cannot offer a time that is already taken.
+
+**Request** — all required: `treatment_id` (decides slot length), `branch_id`
+(a doctor works different days at different branches), `from`, `to` (cap the
+span you accept, e.g. 31 days, and say so in the error).
+
+**Response**
+
+| Field | Type | Notes |
+|---|---|---|
+| `timezone` | string | `"Africa/Cairo"` — an IANA name, not an offset. Egypt observes DST, so a fixed +02:00 breaks twice a year. |
+| `generated_at` | timestamp | Lets the form warn that slots may be stale. |
+| `slot_minutes` | integer | Grid the slots sit on, e.g. 15 or 30. |
+| `min_notice_minutes` | integer | How soon an appointment may start. |
+| `days[]` | object[] | One entry per date **including full and closed days** — the picker greys them out rather than hiding them. |
+| `days[].date` | date | `"2026-04-12"` |
+| `days[].status` | string | `open` · `full` · `closed` · `holiday` |
+| `days[].note` | string\|null | `"Eid holiday"` — shown on the greyed-out date. |
+| `days[].slots[]` | object[] | Bookable starts only. Empty for a full or closed day. |
+| `slots[].start` | timestamp | `"2026-04-12T14:30:00+03:00"` — with offset. |
+| `slots[].end` | timestamp | Start + duration + buffer, computed by you. |
+| `slots[].slot_id` | string | Opaque token, passed straight back when holding and booking. |
+
+**Return only free slots, never busy ones.** Listing taken appointments — even
+without names — leaks how busy a clinic is and when a specific patient attends.
+Availability is patient data.
+
+Rules: `Cache-Control: no-store`; aim under 300ms (the visitor is waiting on a
+date change); a day with no slots is `status: full`/`closed`, never an error;
+every timestamp carries its offset and the site never converts; rate-limit by IP
+and return `429` with `Retry-After`.
+
+## 12. Creating a booking
+
+Two steps, because a web form takes minutes to fill and the slot must not vanish
+underneath the visitor, nor be held forever if they abandon it.
+
+**Step 1 — `POST /holds`**, called the moment a time is chosen. Send
+`doctor_id`, `treatment_id`, `branch_id`, `slot_id`. Returns `hold_id` and
+`expires_at` (~10 minutes). Return `409 {"error":"That time was just taken"}` if
+the slot went while the page was open; the form refetches and asks again.
+
+**Step 2 — `POST /bookings`**
+
+| Field | Type | Req | Notes |
+|---|---|---|---|
+| `hold_id` | string | yes | From step 1. Expired holds return `410`. |
+| `doctor_id` | string | yes | Re-sent so you can verify it matches the hold. |
+| `treatment_id` | string | yes | — |
+| `branch_id` | string | yes | — |
+| `slot_id` | string | yes | — |
+| `name` | string(200) | yes | Patient's full name. |
+| `phone` | string(50) | yes | The clinic's primary channel. Validate format, echo back normalised. |
+| `email` | string(200) | no | Many patients book with a phone only. |
+| `birthday` | date\|null | no | Collected today; keep only if the clinic needs it. |
+| `message` | text | no | Free text from the visitor. |
+| `source` | string | yes | `"website-doctor-page"` — so the clinic sees where bookings come from. |
+| `idempotency_key` | string | yes | One per submission. A repeat with the same key returns the **same** booking — this is what stops a double-tap creating two appointments. |
+
+**Response**: `id`, a human `booking_reference` the patient can quote,
+`status` (`confirmed` or `pending`), `appointment_start` / `appointment_end`
+with offset, and the doctor, treatment and branch names for the confirmation
+screen. Add `GET /bookings/{id}` so the thank-you page can be reloaded.
+
+The two failures the form must handle:
+`409 {"error":"That time was just taken"}` → refetch slots and ask again;
+`410 {"error":"Your hold expired"}` → re-hold the same slot.
+
+**The site cannot store appointments today.** Its `bookings` table has no date
+or time column at all, and records doctor, treatment and branch as loose text.
+Appointments therefore live in the external system and the website keeps only a
+reference — the right split anyway, since clinic staff work in that calendar,
+not in the website dashboard.
+
+## 13. Two more things to confirm
+
+5. **Who confirms an appointment — the provider or the clinic?** It decides
+   whether `POST /bookings` returns `confirmed` or `pending`, and whether the
+   patient is confirmed immediately or after a staff call. Also confirm who
+   sends the confirmation and on which channel — the clinic runs on WhatsApp.
+
+6. **Can a patient cancel or reschedule from the website?** Out of scope above.
+   If yes it needs two more endpoints and a token emailed to the patient,
+   because a booking id in a URL is guessable and would expose other people's
+   appointments.
