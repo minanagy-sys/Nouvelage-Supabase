@@ -150,16 +150,3 @@ another time.
 2. **Case object** with `doctor_id`, `treatment_ids` and `consent_on_file`.
 3. **Availability endpoint** returning free slots.
 4. **Booking endpoint** accepting ids and a slot.
-
----
-
-## Before you hand it over
-
-```bash
-node backend/scripts/validate-provider.mjs --base https://your-api/v1
-```
-
-It checks the shape and the links, and exits non-zero on any failure. A case
-pointing at a doctor `/doctors` does not return, a doctor listing a treatment
-`/treatments` does not have, or the two sides of a link disagreeing are all
-caught here.
