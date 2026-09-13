@@ -125,7 +125,7 @@ changing application code.
 |---|---|---|---|
 | `bio` | text | no | Short tagline for the profile header. |
 | `long_bio` | text | no | Full biography. Plain text with newlines, not HTML. (The dashboard labels this "About".) |
-| `philosophy` | text | no | The doctor's approach to care. |
+| `philosophy` | text | no | **Not rendered anywhere.** A column inherited from the old platform; the "Consultations" card that looks like it is a hardcoded sentence, identical for every doctor. Do not ask a provider for it. |
 
 ### Media, display and SEO
 
@@ -158,7 +158,7 @@ does *not* mean the field is unimportant — each one hides a block or falls bac
 | Omitted | What the visitor sees |
 |---|---|
 | `specialization` | A blank line under the name — the most visible line after it. |
-| `philosophy` | The Consultations card disappears. |
+| `philosophy` | Nothing — it is not rendered on any page (the Consultations card is hardcoded text). |
 | `bio` | Tagline falls back to `long_bio`, then to a generic sentence. |
 | `long_bio` | **A paragraph nobody at the clinic wrote** — see below. |
 | `title` | Nothing in practice; the honorific is usually inside `name`. |
@@ -213,9 +213,9 @@ working unchanged, the flat record is what the treatment pages filter on.
 | `treatment_id` | string | yes | **What was actually done**, as a treatment id. This is what lets a service's gallery show only cases of *that* treatment. Without it the gallery filters by doctor alone, which is why a doctor's Botox case currently appears under a laser service. |
 | `treatment_ids` | string[] | no | For a combined case (fillers *and* Botox in one sitting). Include `treatment_id` among them. |
 | `bodypart` | string | yes | `"Lips"`. Filter facet — vocabulary in §5. |
-| `material` | string | yes | `"Filler (HA)"`. What was used. |
-| `effect` | string | yes | `"Volume"`. What it achieved; the gallery card title. |
-| `category` | string | yes | Drives the gallery filter buttons. Absent today, so every card reads "SKIN". |
+| `material` | string | yes | `"Filler (HA)"`. The product chip on the doctor profile. Not a filter. |
+| `effect` | string | yes | `"Volume"`. The card title on the doctor profile. Not a filter. |
+| `category` | string | yes | **The only case filter that exists** — the buttons on the doctor profile gallery. Absent today, so the site guesses it from bodypart + material through a hardcoded function, which is why every card reads "SKIN". The service popup has no filters at all. |
 | `desc` | string | yes | `"skin booster"`. Caption under the pair. |
 | `before` | string\|null | yes | Some existing rows are empty; nullable, and the site skips incomplete pairs. |
 | `after` | string\|null | yes | As above. |
