@@ -145,6 +145,34 @@ changing application code.
 | `created_at` | timestamp | yes | ISO 8601 UTC. |
 | `updated_at` | timestamp | yes | ISO 8601 UTC. Useful for cache validation. |
 
+### What "required" and "optional" mean on a doctor
+
+**Required** = the key is present in every record, even when empty. An empty
+list is `[]`, never `null` and never a missing key; the validator rejects the
+response otherwise. These drive what a visitor cannot miss: name, portrait,
+the years and rating on the card, branch chips, display order.
+
+**Optional** = the key may be absent or `null` and the page still renders. It
+does *not* mean the field is unimportant — each one hides a block or falls back:
+
+| Omitted | What the visitor sees |
+|---|---|
+| `specialization` | A blank line under the name — the most visible line after it. |
+| `philosophy` | The Consultations card disappears. |
+| `bio` | Tagline falls back to `long_bio`, then to a generic sentence. |
+| `long_bio` | **A paragraph nobody at the clinic wrote** — see below. |
+| `title` | Nothing in practice; the honorific is usually inside `name`. |
+| `gender` | Nothing breaks, but the doctor can't be filtered onto For Her / For Him. |
+| `meta_title`, `meta_description` | Nothing yet — `doctor-detail.component.ts` sets no meta tags at all. |
+| `instagram_url`, `facebook_url`, `linkedin_url` | Nothing — the profile links the clinic's accounts, not the doctor's. |
+
+> **Treat `long_bio` as required in practice.** When it is missing, the profile
+> does not leave a gap: `doctor-detail.component.html` prints a generic
+> paragraph ("brings years of expertise in aesthetic medicine…") with the
+> doctor's first name interpolated. Fifty doctors without a bio produce fifty
+> identical biographies. If a doctor genuinely has none, hide the block instead
+> — that is a template change on our side, not a data problem on theirs.
+
 > **Three fields the profile page shows that no column holds today.**
 > The doctor detail page renders `treatments` (`[{name, description}]`),
 > `expertise` (`string[]`) and `booking_link`. They currently come from a file
