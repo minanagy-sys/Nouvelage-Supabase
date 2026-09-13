@@ -22,6 +22,36 @@ Three companion files:
 * A short hand-over page for the provider, published at
   <https://claude.ai/code/artifact/1fdaaabb-51f8-4c11-98e9-beb7c0972c06>.
 
+> ## Scope note — phase 1 is a hybrid, and it is smaller than this document
+>
+> This file specifies the full picture, including a `/treatments` endpoint and
+> `treatment_ids` on a doctor. **That is phase 2.** For phase 1 the clinic keeps
+> its own treatment catalogue and branches, and the provider serves only what it
+> is the source of truth for:
+>
+> | Owner | What |
+> |---|---|
+> | Provider | doctors, before/after cases, schedules and free slots, appointments |
+> | Us | treatments/services and prices, branches, and which doctors perform which treatment |
+>
+> The bridge already exists: our `services` table carries
+> `specialist_doctor_ids`, and both the service popup
+> (`services.component.ts`) and the doctor profile
+> (`doctor-detail.component.ts`) already resolve doctors through it. Once those
+> ids are the provider's doctor ids, the profile's treatment list and the
+> booking dropdown both read our own catalogue — one source, no sync.
+>
+> Two consequences for phase 1:
+>
+> * **No `/treatments` endpoint is required from the provider**, and a doctor
+>   needs no `treatment_ids`. It needs `branch_ids` (ours) instead.
+> * **Availability takes `duration_minutes`, not `treatment_id`** — duration
+>   comes from our service record, so the provider never needs our catalogue.
+>   In phase 2 that parameter becomes `treatment_id` and nothing else changes.
+>
+> The short hand-over page for the provider describes phase 1 only:
+> <https://claude.ai/code/artifact/1fdaaabb-51f8-4c11-98e9-beb7c0972c06>
+
 ## 1. Endpoints
 
 Public, unauthenticated, `GET` only. The envelope key matters — the site reads
