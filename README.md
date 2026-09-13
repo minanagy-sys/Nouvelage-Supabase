@@ -22,7 +22,7 @@ nouvelage/
 │   ├── scripts/    setup-db · migrate · create-admin · list-admins · validate-provider · import-*
 │   └── src/        API source (routes, admin CRUD registry, media pipeline)
 ├── deploy/     docker-compose (MySQL + API) + nginx server block example
-├── docs/       WHAT-WE-NEED.md (field-by-field requirements) + API contract + OpenAPI
+├── docs/       API-CONTRACT-SIMPLE.md (hand this over) + WHAT-WE-NEED.md + OpenAPI
 └── MIGRATION.md  Runbook: moving the live Supabase data into MySQL
 ```
 
@@ -116,7 +116,9 @@ Non-negotiables carried from the security review:
 
 ## Handing work to an external API provider
 
-Start with **`docs/WHAT-WE-NEED.md`** — every field the site actually renders,
+Send the provider **`docs/API-CONTRACT-SIMPLE.md`** — six endpoints, the
+fields we need and nothing else. **`docs/WHAT-WE-NEED.md`** is the working
+version behind it: every field the site actually renders,
 extracted from the components that render it, marked EXT (the provider must
 serve it) or OURS (we write it in the dashboard), with the missing pieces
 flagged. `docs/DOCTORS-API-CONTRACT.md` is the fuller contract behind it. Two
